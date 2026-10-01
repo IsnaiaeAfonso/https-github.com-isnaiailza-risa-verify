@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F6F7F5;
+  color: #10161C;
+}
+
+::selection {
+  background-color: #0E6F63;
+  color: white;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid #0E6F63;
+  outline-offset: 2px;
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+.animate-scan {
+  animation: scan 1.8s ease-in-out infinite;
+}
