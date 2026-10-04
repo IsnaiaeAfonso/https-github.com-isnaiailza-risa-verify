@@ -4,9 +4,9 @@ export interface PdfTextExtraction {
 }
 
 export async function extractPdfText(file: File): Promise<PdfTextExtraction> {
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.js");
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/legacy/build/pdf.worker.mjs",
+    "pdfjs-dist/legacy/build/pdf.worker.js",
     import.meta.url
   ).toString();
 
