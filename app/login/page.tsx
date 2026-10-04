@@ -31,7 +31,7 @@ export default function LoginPage() {
             <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
               <ShieldCheck size={16} className="text-white" />
             </div>
-            <span className="text-lg font-semibold">IASX</span>
+            <span className="text-lg font-semibold">CliniVerify</span>
           </div>
           <p className="text-sm text-white/50">Clinical Review</p>
 
@@ -55,7 +55,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-white/35 leading-relaxed max-w-sm">
-          Ambiente de demonstração — dados sintéticos. O IASX Clinical Review não realiza
+          Ambiente de demonstração — dados sintéticos. O CliniVerify não realiza
           diagnóstico, prescrição ou recomendação médica.
         </p>
       </section>
@@ -66,7 +66,7 @@ export default function LoginPage() {
             <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
               <ShieldCheck size={16} className="text-white" />
             </div>
-            <span className="text-lg font-semibold text-ink">IASX Clinical Review</span>
+            <span className="text-lg font-semibold text-ink">CliniVerify</span>
           </div>
 
           <h2 className="text-xl font-semibold text-ink">Acesse sua conta</h2>

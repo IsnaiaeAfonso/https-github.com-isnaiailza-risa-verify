@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCaseStore } from "@/lib/store";
+import { extractPdfText } from "@/lib/pdfTextExtractor";
 import AppShell from "@/components/AppShell";
 import { UploadCloud, FileText, X } from "lucide-react";
 
@@ -18,13 +19,17 @@ export default function NewCasePage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [label, setLabel] = useState("");
-  const [files, setFiles] = useState<{ name: string; sizeLabel: string }[]>([]);
+  const [files, setFiles] = useState<{ file: File; name: string; sizeLabel: string }[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [creating, setCreating] = useState(false);
 
   function handleFiles(fileList: FileList | null) {
     if (!fileList) return;
-    const next = Array.from(fileList).map((f) => ({ name: f.name, sizeLabel: formatSize(f.size) }));
+    const next = Array.from(fileList).map((file) => ({
+      file,
+      name: file.name,
+      sizeLabel: formatSize(file.size),
+    }));
     setFiles((prev) => [...prev, ...next]);
   }
 
@@ -32,10 +37,31 @@ export default function NewCasePage() {
     setFiles((prev) => prev.filter((f) => f.name !== name));
   }
 
-  function handleAnalyze() {
+  async function handleAnalyze() {
     setCreating(true);
+    const preparedFiles = await Promise.all(files.map(async ({ file, name, sizeLabel }) => {
+      try {
+        const extraction = await extractPdfText(file);
+        const extractedPages = extraction.pages;
+        return {
+          name,
+          sizeLabel,
+          pages: extraction.pageCount,
+          extractedPages,
+          extractionStatus: extractedPages.some((page) => page.trim()) ? "text_extracted" as const : "no_text" as const,
+        };
+      } catch {
+        return {
+          name,
+          sizeLabel,
+          pages: 0,
+          extractedPages: [],
+          extractionStatus: "unreadable" as const,
+        };
+      }
+    }));
     const newCase = createCase(label.trim());
-    if (files.length > 0) addDocuments(newCase.id, files);
+    if (preparedFiles.length > 0) addDocuments(newCase.id, preparedFiles);
     runAnalysis(newCase.id);
     router.push(`/cases/${newCase.id}/analyzing`);
   }

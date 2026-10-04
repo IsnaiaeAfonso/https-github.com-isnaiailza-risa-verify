@@ -6,35 +6,78 @@ import {
   ClinicalDocument,
   ReviewDecision,
   Attestation,
+  JevItem,
 } from "./types";
-import { seedCases, buildDemoCase, jevItemsForDemo, DEMO_CASE_ID } from "./mockData";
+import { buildDemoCase, jevItemsForDemo, DEMO_CASE_ID } from "./mockData";
+import { analyzeClinicalDocuments } from "./clinicalAnalyzer";
 
 const STORAGE_KEY = "iasx-clinical-review-state-v1";
+const EXPLICIT_DEMO_KEY = `${STORAGE_KEY}-demo-explicitly-loaded`;
+const LEGACY_SEED_CASE_IDS = new Set(["case-002", "case-003"]);
+const LEGACY_DEMO_DOCUMENT_IDS = new Set(["doc-1", "doc-2", "doc-3", "doc-4", "doc-5"]);
+const LEGACY_DEMO_FINDING_IDS = new Set(["f-1", "f-2", "f-3", "f-4", "f-5"]);
+const LEGACY_DEMO_CONFLICT_IDS = new Set(["c-1", "c-2", "c-3"]);
+const LEGACY_DEMO_GAP_IDS = new Set(["g-1", "g-2", "g-3"]);
+const LEGACY_DEMO_TIMELINE_IDS = new Set(["t-1", "t-2", "t-3", "t-4", "t-5", "t-6"]);
 
 interface StoreShape {
   cases: ClinicalCase[];
 }
 
+function removeLegacyDemoData(clinicalCase: ClinicalCase): ClinicalCase {
+  return {
+    ...clinicalCase,
+    documents: clinicalCase.documents.filter((document) => !LEGACY_DEMO_DOCUMENT_IDS.has(document.id)),
+    findings: clinicalCase.findings.filter((finding) => !LEGACY_DEMO_FINDING_IDS.has(finding.id)),
+    conflicts: clinicalCase.conflicts.filter((conflict) => !LEGACY_DEMO_CONFLICT_IDS.has(conflict.id)),
+    gaps: clinicalCase.gaps.filter((gap) => !LEGACY_DEMO_GAP_IDS.has(gap.id)),
+    timeline: clinicalCase.timeline.filter((event) => !LEGACY_DEMO_TIMELINE_IDS.has(event.id)),
+  };
+}
+
 function loadInitial(): StoreShape {
-  if (typeof window === "undefined") return { cases: seedCases };
+  if (typeof window === "undefined") return { cases: [] };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as StoreShape;
+    if (raw) {
+      const stored = JSON.parse(raw) as StoreShape;
+      if (!Array.isArray(stored.cases)) return { cases: [] };
+
+      const demoExplicitlyLoaded = window.localStorage.getItem(EXPLICIT_DEMO_KEY) === "true";
+      return {
+        ...stored,
+        cases: stored.cases
+          .filter((clinicalCase) =>
+            !LEGACY_SEED_CASE_IDS.has(clinicalCase.id) &&
+            (clinicalCase.id !== DEMO_CASE_ID || demoExplicitlyLoaded)
+          )
+          .map((clinicalCase) =>
+            clinicalCase.id === DEMO_CASE_ID ? clinicalCase : removeLegacyDemoData(clinicalCase)
+          ),
+      };
+    }
   } catch {
-    // ignore corrupted storage, fall back to seed
+    // ignore corrupted storage and start empty
   }
-  return { cases: seedCases };
+  return { cases: [] };
 }
 
 interface CaseStoreApi {
   cases: ClinicalCase[];
   getCase: (id: string) => ClinicalCase | undefined;
   createCase: (subjectLabel: string) => ClinicalCase;
-  addDocuments: (caseId: string, files: { name: string; sizeLabel: string }[]) => void;
+  loadDemoCase: () => void;
+  addDocuments: (caseId: string, files: {
+    name: string;
+    sizeLabel: string;
+    pages: number;
+    extractedPages: string[];
+    extractionStatus: "text_extracted" | "no_text" | "unreadable";
+  }[]) => void;
   runAnalysis: (caseId: string) => void;
   submitDecisions: (caseId: string, decisions: ReviewDecision[]) => void;
   completeReview: (caseId: string, reviewer: string) => Attestation;
-  jevItemsFor: (caseId: string) => typeof jevItemsForDemo;
+  jevItemsFor: (caseId: string) => JevItem[];
 }
 
 const CaseStoreContext = createContext<CaseStoreApi | null>(null);
@@ -42,7 +85,7 @@ const CaseStoreContext = createContext<CaseStoreApi | null>(null);
 let caseCounter = 143;
 
 export function CaseStoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<StoreShape>(() => loadInitial());
+  const [state, setState] = useState<StoreShape>({ cases: [] });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -76,6 +119,14 @@ export function CaseStoreProvider({ children }: { children: React.ReactNode }) {
         setState((s) => ({ cases: [newCase, ...s.cases] }));
         return newCase;
       },
+      loadDemoCase: () => {
+        window.localStorage.setItem(EXPLICIT_DEMO_KEY, "true");
+        setState((s) =>
+          s.cases.some((c) => c.id === DEMO_CASE_ID)
+            ? s
+            : { cases: [buildDemoCase(), ...s.cases] }
+        );
+      },
       addDocuments: (caseId, files) => {
         setState((s) => ({
           cases: s.cases.map((c) => {
@@ -84,9 +135,13 @@ export function CaseStoreProvider({ children }: { children: React.ReactNode }) {
               id: `${caseId}-doc-${c.documents.length + i + 1}`,
               name: f.name,
               type: "Documento enviado",
-              pages: Math.max(1, Math.round(Math.random() * 6)),
+              pages: f.pages,
               uploadedAt: new Date().toISOString(),
               sizeLabel: f.sizeLabel,
+              origin: "user_upload",
+              fileStored: false,
+              extractedPages: f.extractedPages,
+              extractionStatus: f.extractionStatus,
             }));
             return {
               ...c,
@@ -98,28 +153,30 @@ export function CaseStoreProvider({ children }: { children: React.ReactNode }) {
       },
       runAnalysis: (caseId) => {
         setState((s) => ({
-          cases: s.cases.map((c) => (c.id === caseId ? { ...c, status: "em_analise" } : c)),
+          cases: s.cases.map((c) =>
+            c.id === caseId ? { ...c, status: "em_analise" } : c
+          ),
         }));
-        // simulate async pipeline completion; UI screen also drives its own timer,
-        // this just ensures the underlying record is populated once analysis "finishes".
+
         setTimeout(() => {
           setState((s) => ({
             cases: s.cases.map((c) => {
               if (c.id !== caseId) return c;
-              const demo = buildDemoCase();
+              if (caseId === DEMO_CASE_ID) {
+                return { ...c, status: "revisao_pendente" };
+              }
+
+              const analysis = analyzeClinicalDocuments(c.documents);
               return {
                 ...c,
                 status: "revisao_pendente",
-                documents: c.documents.length ? c.documents : demo.documents,
-                findings: demo.findings,
-                conflicts: demo.conflicts,
-                gaps: demo.gaps,
-                timeline: demo.timeline,
+                ...analysis,
               };
             }),
           }));
         }, 3200);
       },
+
       submitDecisions: (caseId, decisions) => {
         setState((s) => ({
           cases: s.cases.map((c) =>
@@ -152,8 +209,40 @@ export function CaseStoreProvider({ children }: { children: React.ReactNode }) {
         return attestation;
       },
       jevItemsFor: (caseId) => {
-        // Mock: demo case gets curated JEV items, others get a generic subset.
-        return caseId === DEMO_CASE_ID ? jevItemsForDemo : jevItemsForDemo.slice(0, 3);
+        if (caseId === DEMO_CASE_ID) return jevItemsForDemo;
+
+        const clinicalCase = state.cases.find((c) => c.id === caseId);
+        if (!clinicalCase) return [];
+
+        return [
+          ...clinicalCase.findings.map((finding): JevItem => ({
+            id: `jev-${finding.id}`,
+            relatedTitle: finding.title,
+            relatedType: "finding",
+            humanReviewRequired: true,
+            priority: finding.confidence,
+            clarity: finding.confidence,
+            reason: finding.summary,
+          })),
+          ...clinicalCase.conflicts.map((conflict): JevItem => ({
+            id: `jev-${conflict.id}`,
+            relatedTitle: conflict.title,
+            relatedType: "conflict",
+            humanReviewRequired: true,
+            priority: conflict.severity,
+            clarity: "media",
+            reason: conflict.description,
+          })),
+          ...clinicalCase.gaps.map((gap): JevItem => ({
+            id: `jev-${gap.id}`,
+            relatedTitle: gap.title,
+            relatedType: "gap",
+            humanReviewRequired: true,
+            priority: "baixa",
+            clarity: "media",
+            reason: gap.description,
+          })),
+        ];
       },
     };
   }, [state]);

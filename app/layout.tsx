@@ -18,7 +18,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IASX Clinical Review",
+  title: "CliniVerify",
   description: "Revisão clínica assistida de documentos, com evidência rastreável e atestação em Solana Devnet.",
 };
 
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex-1 flex flex-col">{children}</div>
           <footer className="border-t border-line bg-panel">
             <div className="max-w-6xl mx-auto px-6 py-3 text-xs text-muted leading-relaxed">
-              O IASX Clinical Review organiza, cruza e sinaliza informações contidas em documentos
+              O CliniVerify Clinical Review organiza, cruza e sinaliza informações contidas em documentos
               enviados pelo usuário. A ferramenta não realiza diagnóstico, prescrição ou
               recomendação médica, e não substitui o julgamento de um profissional de saúde
               habilitado. Todos os dados exibidos nesta demonstração são fictícios.

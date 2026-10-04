@@ -27,6 +27,10 @@ export interface ClinicalDocument {
   pages: number;
   uploadedAt?: string;
   sizeLabel: string;
+  origin?: "user_upload" | "demo";
+  fileStored?: boolean;
+  extractedPages?: string[];
+  extractionStatus?: "text_extracted" | "no_text" | "unreadable";
 }
 
 export interface EvidenceRef {
@@ -66,6 +70,11 @@ export interface TimelineEvent {
   label: string;
   docId: string;
   docName: string;
+  page?: number;
+  excerpt?: string;
+  metric?: string;
+  value?: number;
+  unit?: string;
 }
 
 export type ReviewAction = "confirmado" | "corrigido" | "rejeitado";

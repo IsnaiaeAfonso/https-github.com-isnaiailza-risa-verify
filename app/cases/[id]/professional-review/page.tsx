@@ -213,7 +213,7 @@ export default function ProfessionalReviewPage() {
             <Info size={18} className="text-brand-dark shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-ink">Revisão humana</p>
-              <p className="text-sm text-muted mt-1 leading-relaxed">Revise as informações organizadas pelo IASX antes de concluir o caso. O profissional confirma, corrige ou rejeita cada item; a atestação só acontece depois da revisão.</p>
+              <p className="text-sm text-muted mt-1 leading-relaxed">Revise as informações organizadas pelo CliniVerify antes de concluir o caso. O profissional confirma, corrige ou rejeita cada item; a atestação só acontece depois da revisão.</p>
             </div>
           </Card>
 
@@ -304,7 +304,7 @@ export default function ProfessionalReviewPage() {
                   {decision?.action === "corrigido" && (
                     <div className="mt-4 space-y-3">
                       <div className="rounded-md border border-line bg-paper px-3 py-2.5">
-                        <p className="text-xs font-medium text-muted">Valor identificado pelo IASX</p>
+                        <p className="text-xs font-medium text-muted">Valor identificado pelo CliniVerify</p>
                         <p className="text-sm text-ink mt-1 leading-relaxed">{correctionOriginal}</p>
                       </div>
                       <div>

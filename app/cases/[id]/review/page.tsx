@@ -6,20 +6,42 @@ import Link from "next/link";
 import { useCaseStore } from "@/lib/store";
 import AppShell from "@/components/AppShell";
 import CaseHeader from "@/components/CaseHeader";
+import ClinicalAssistant from "@/components/ClinicalAssistant";
 import ConflictModal from "@/components/ConflictModal";
 import TrendChart from "@/components/TrendChart";
 import { Card, StatBlock, LevelPill, EvidenceQuote } from "@/components/ui";
-import { labTrend } from "@/lib/mockData";
-import { Conflict, EvidenceRef, Finding } from "@/lib/types";
+import { DEMO_CASE_ID, labTrend } from "@/lib/mockData";
+import { ClinicalCase, Conflict, EvidenceRef, Finding } from "@/lib/types";
 import { AlertTriangle, UserCheck, ShieldCheck, FileText, ExternalLink } from "lucide-react";
 
 type Tab = "geral" | "timeline" | "conflitos" | "lacunas" | "estruturada";
 
 function formatDate(iso: string) {
+  if (!iso) return "Data não informada";
+  if (/^\d{4}$/.test(iso)) return iso;
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 const TYPE_LABEL: Record<string, string> = { finding: "Achado", conflict: "Conflito", gap: "Lacuna" };
+
+function trendForCase(clinicalCase: ClinicalCase) {
+  const measurableEvents = clinicalCase.timeline.filter(
+    (event) => Boolean(event.date) && typeof event.value === "number" && Boolean(event.metric) && Boolean(event.unit)
+  );
+  const firstEvent = measurableEvents[0];
+  if (!firstEvent?.metric || !firstEvent.unit) return null;
+
+  const matchingEvents = measurableEvents.filter(
+    (event) => event.metric === firstEvent.metric && event.unit === firstEvent.unit
+  );
+  if (matchingEvents.length < 2) return null;
+
+  return {
+    metric: firstEvent.metric,
+    unit: firstEvent.unit,
+    points: matchingEvents.map((event) => ({ date: event.date, value: event.value as number })),
+  };
+}
 
 export default function ReviewPage() {
   const params = useParams<{ id: string }>();
@@ -37,8 +59,9 @@ export default function ReviewPage() {
     );
   }
 
-  const isAnalyzing = clinicalCase.findings.length === 0 && clinicalCase.documents.length > 0;
+  const isAnalyzing = clinicalCase.status === "em_analise";
   const jevItems = jevItemsFor(clinicalCase.id);
+  const trend = clinicalCase.id === DEMO_CASE_ID ? labTrend : trendForCase(clinicalCase);
   const requiredCount = jevItems.filter((i) => i.humanReviewRequired).length;
   const decisionLabel = { confirmado: "Confirmado", corrigido: "Corrigido", rejeitado: "Rejeitado" } as const;
 
@@ -55,7 +78,7 @@ export default function ReviewPage() {
       <main className="flex-1 bg-paper flex flex-col">
         <CaseHeader
           clinicalCase={clinicalCase}
-          subtitle={`${clinicalCase.documents.length} documentos · análise concluída`}
+          subtitle={`${clinicalCase.documents.length} ${clinicalCase.documents.length === 1 ? "documento" : "documentos"} · análise concluída`}
           action={{ label: "Revisar achados →", href: `/cases/${clinicalCase.id}/professional-review` }}
         />
 
@@ -129,9 +152,13 @@ export default function ReviewPage() {
 
             {tab === "timeline" && (
               <div className="space-y-6">
-                <Card className="px-5 py-5">
-                  <TrendChart points={labTrend.points} metric={labTrend.metric} unit={labTrend.unit} />
-                </Card>
+                {trend ? (
+                  <Card className="px-5 py-5">
+                    <TrendChart points={trend.points} metric={trend.metric} unit={trend.unit} />
+                  </Card>
+                ) : (
+                  <p className="text-sm text-muted">Sem dados suficientes para montar uma tendência.</p>
+                )}
                 <Card className="px-5 py-4">
                   <ol className="relative border-l border-line ml-1.5 space-y-5">
                     {clinicalCase.timeline.map((ev) => (
@@ -139,7 +166,9 @@ export default function ReviewPage() {
                         <span className="absolute -translate-x-[calc(0.375rem+1px)] mt-1.5 h-2 w-2 rounded-full bg-brand" />
                         <span className="text-xs text-muted font-mono">{formatDate(ev.date)}</span>
                         <p className="text-sm text-ink">{ev.label}</p>
-                        <p className="text-xs text-muted mt-0.5">{ev.docName}</p>
+                        <p className="text-xs text-muted mt-0.5">
+                          {ev.docName}{ev.page ? ` · pág. ${ev.page}` : ""}
+                        </p>
                       </li>
                     ))}
                     {clinicalCase.timeline.length === 0 && (
@@ -233,6 +262,9 @@ export default function ReviewPage() {
                   ))}
                 </div>
               </div>
+            )}
+            {(clinicalCase.status === "revisao_pendente" || clinicalCase.status === "revisao_concluida") && (
+              <ClinicalAssistant key={clinicalCase.id} clinicalCase={clinicalCase} />
             )}
           </div>
         )}

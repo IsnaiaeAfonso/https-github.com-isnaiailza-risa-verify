@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCaseStore } from "@/lib/store";
 import { StatusPill, MetricCard } from "@/components/ui";
 import AppShell from "@/components/AppShell";
-import { FolderOpen, ListChecks, ShieldCheck, AlertTriangle, Plus, FileText } from "lucide-react";
+import { FolderOpen, ListChecks, ShieldCheck, AlertTriangle, Plus, FileText, FlaskConical } from "lucide-react";
+import { DEMO_CASE_ID } from "@/lib/mockData";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -19,7 +20,7 @@ const STATUS_TARGET: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { cases } = useCaseStore();
+  const { cases, loadDemoCase } = useCaseStore();
 
   const totalDocs = cases.reduce((n, c) => n + c.documents.length, 0);
   const totalFindings = cases.reduce((n, c) => n + c.findings.length, 0);
@@ -35,14 +36,29 @@ export default function DashboardPage() {
               <h1 className="text-xl font-semibold text-ink">Dashboard</h1>
               <p className="text-sm text-muted mt-1">Visão geral dos seus casos de revisão clínica.</p>
             </div>
-            <Link
-              href="/cases/new"
-              className="focus-ring inline-flex items-center gap-2 bg-brand hover:bg-brand-dark transition-colors text-white text-sm font-medium px-4 py-2.5 rounded-md shadow-card"
-            >
-              <Plus size={16} />
-              Novo caso
-            </Link>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={loadDemoCase}
+                disabled={cases.some((c) => c.id === DEMO_CASE_ID)}
+                className="focus-ring inline-flex items-center gap-2 border border-line bg-panel hover:bg-brand-light/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-ink text-sm font-medium px-4 py-2.5 rounded-md"
+              >
+                <FlaskConical size={16} />
+                Carregar caso demonstrativo
+              </button>
+              <Link
+                href="/cases/new"
+                className="focus-ring inline-flex items-center gap-2 bg-brand hover:bg-brand-dark transition-colors text-white text-sm font-medium px-4 py-2.5 rounded-md shadow-card"
+              >
+                <Plus size={16} />
+                Novo caso
+              </Link>
+            </div>
           </div>
+
+          <p className="text-xs text-muted -mt-3 mb-6">
+            O caso demonstrativo contém dados fictícios/sintéticos e só será adicionado quando você escolher carregá-lo.
+          </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             <MetricCard icon={FolderOpen} label="Casos" value={cases.length} tone="neutral" />

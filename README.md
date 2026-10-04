@@ -1,4 +1,4 @@
-# IASX Clinical Review — MVP de frontend (mock)
+# CliniVerify Clinical Review — MVP de frontend (mock)
 
 Protótipo navegável do fluxo de revisão clínica assistida. **Somente frontend**, com dados
 totalmente fictícios e simulados em memória (React Context + `localStorage`). Não há backend,
@@ -28,7 +28,7 @@ Abra `http://localhost:3000`.
 7. **JEV** — incorporado na aba "Revisão estruturada" da Clinical Review: necessidade de revisão humana, prioridade e clareza por item.
 8. **Revisão profissional** (`/cases/[id]/professional-review`) — um item por vez (achado ou conflito), com paginação e ações confirmar / corrigir / rejeitar.
 9. **Atestação** (`/cases/[id]/attestation`) — revisão concluída, checklist de integridade, selo "Solana Devnet" e transaction ID mockado (copiável).
-10. **Verificação** (`/cases/[id]/verify`) — certificado "IASX VERIFICATION" com checklist ATTESTED e dados da transação.
+10. **Verificação** (`/cases/[id]/verify`) — certificado "CliniVerify VERIFICATION" com checklist ATTESTED e dados da transação.
 
 A barra lateral escura (Dashboard / Novo caso / Meus casos / Configurações) e a barra superior ficam
 fixas em todas as telas autenticadas.
@@ -43,6 +43,6 @@ fixas em todas as telas autenticadas.
 
 ## Aviso
 
-O IASX Clinical Review, nesta demonstração e na visão de produto, organiza e sinaliza informações
+O CliniVerify Clinical Review, nesta demonstração e na visão de produto, organiza e sinaliza informações
 de documentos — **não realiza diagnóstico, prescrição ou recomendação médica**. Todos os dados
 clínicos usados são fictícios.

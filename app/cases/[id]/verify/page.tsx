@@ -6,7 +6,8 @@ import { useCaseStore } from "@/lib/store";
 import AppShell from "@/components/AppShell";
 import CaseHeader from "@/components/CaseHeader";
 import { Card } from "@/components/ui";
-import { ShieldCheck, CheckCircle2, FileText, ScanSearch, UserCheck2, Fingerprint, Download } from "lucide-react";
+import { ShieldCheck, CheckCircle2, FileText, ScanSearch, UserCheck2, Fingerprint, Download, AlertCircle } from "lucide-react";
+import { DEMO_CASE_ID } from "@/lib/mockData";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" });
@@ -31,12 +32,15 @@ export default function VerifyPage() {
   }
 
   const attestation = clinicalCase.attestation;
+  const documentStored = clinicalCase.id === DEMO_CASE_ID || (
+    clinicalCase.documents.length > 0 && clinicalCase.documents.every((document) => document.fileStored === true)
+  );
 
   const checks = [
-    { icon: FileText, label: "Documento", status: "VERIFIED" },
-    { icon: ScanSearch, label: "Análise", status: "VERIFIED" },
-    { icon: UserCheck2, label: "Revisão profissional", status: "CONFIRMED" },
-    { icon: Fingerprint, label: "Integridade", status: "VERIFIED" },
+    { icon: FileText, label: "Documento", status: documentStored ? "VERIFIED" : "NOT STORED", verified: documentStored },
+    { icon: ScanSearch, label: "Análise", status: "VERIFIED", verified: true },
+    { icon: UserCheck2, label: "Revisão profissional", status: "CONFIRMED", verified: true },
+    { icon: Fingerprint, label: "Integridade", status: "VERIFIED", verified: true },
   ];
 
   return (
@@ -56,7 +60,7 @@ export default function VerifyPage() {
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={18} className="text-brand-dark" />
-                <span className="text-sm font-semibold text-ink tracking-wide">IASX VERIFICATION</span>
+                <span className="text-sm font-semibold text-ink tracking-wide">CliniVerify VERIFICATION</span>
               </div>
               <button
                 onClick={() => window.print()}
@@ -74,7 +78,9 @@ export default function VerifyPage() {
                 </div>
                 <div>
                   <div className="text-base font-semibold text-success-dark">ATTESTED</div>
-                  <p className="text-sm text-ink/80">Esta revisão foi validada e registrada on-chain.</p>
+                  <p className="text-sm text-ink/80">
+                     Esta revisão foi registrada e sua integridade foi atestada on-chain.
+                  </p>
                 </div>
               </div>
             </Card>
@@ -88,14 +94,20 @@ export default function VerifyPage() {
                       <Icon size={15} className="text-muted" />
                       <span className="text-sm text-ink">{c.label}</span>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-success-dark">
-                      <CheckCircle2 size={13} />
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium ${c.verified ? "text-success-dark" : "text-muted"}`}>
+                      {c.verified ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
                       {c.status}
                     </span>
                   </div>
                 );
               })}
             </Card>
+
+            {!documentStored && (
+              <p className="text-xs text-muted mt-3">
+                O arquivo original enviado pelo usuário não está armazenado; a visualização do documento não está disponível.
+              </p>
+            )}
 
             <Card className="px-5 py-4">
               <div className="grid grid-cols-2 gap-4 text-sm">

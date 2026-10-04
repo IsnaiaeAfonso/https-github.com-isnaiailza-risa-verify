@@ -22,7 +22,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="h-7 w-7 rounded-md bg-brand flex items-center justify-center">
               <ShieldCheck size={15} className="text-white" />
             </div>
-            <span className="text-sm font-semibold tracking-wide text-white">IASX</span>
+            <span className="text-sm font-semibold tracking-wide text-white">CliniVerify</span>
           </div>
           <p className="text-[11px] text-white/45 mt-1 leading-snug">Clinical Review</p>
         </div>
