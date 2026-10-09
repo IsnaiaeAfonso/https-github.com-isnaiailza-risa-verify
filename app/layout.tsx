@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { CaseStoreProvider } from "@/lib/store";
+import { LanguageProvider } from "@/components/LanguageProvider";
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -18,8 +19,8 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CliniVerify",
-  description: "Revisão clínica assistida de documentos, com evidência rastreável e atestação em Solana Devnet.",
+  title: "RISA Verify",
+  description: "Revisão de documentos com evidência rastreável e apoio profissional.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,15 +28,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased min-h-screen flex flex-col">
         <CaseStoreProvider>
-          <div className="flex-1 flex flex-col">{children}</div>
-          <footer className="border-t border-line bg-panel">
-            <div className="max-w-6xl mx-auto px-6 py-3 text-xs text-muted leading-relaxed">
-              O CliniVerify Clinical Review organiza, cruza e sinaliza informações contidas em documentos
-              enviados pelo usuário. A ferramenta não realiza diagnóstico, prescrição ou
-              recomendação médica, e não substitui o julgamento de um profissional de saúde
-              habilitado. Todos os dados exibidos nesta demonstração são fictícios.
-            </div>
-          </footer>
+          <LanguageProvider>
+            <div className="flex-1 flex flex-col">{children}</div>
+            <footer className="border-t border-line bg-panel">
+              <div className="max-w-6xl mx-auto px-6 py-3 text-xs text-muted leading-relaxed">
+                A RISA Verify organiza, cruza e sinaliza informações contidas em documentos
+                enviados pelo usuário. A ferramenta não realiza diagnóstico, prescrição ou
+                recomendação médica, e não substitui o julgamento de um profissional de saúde
+                habilitado. Todos os dados exibidos nesta demonstração são fictícios.
+              </div>
+            </footer>
+          </LanguageProvider>
         </CaseStoreProvider>
       </body>
     </html>

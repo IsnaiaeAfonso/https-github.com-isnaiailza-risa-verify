@@ -13,14 +13,35 @@ const FEATURES = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("medico@iasx.demo");
-  const [password, setPassword] = useState("IASX@2026");
+  const [username, setUsername] = useState("risa");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    router.push("/dashboard");
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password,
+          next: new URLSearchParams(window.location.search).get("next"),
+        }),
+      });
+      const result = await response.json() as { error?: string; redirectTo?: string };
+      if (!response.ok) throw new Error(result.error ?? "Não foi possível autenticar.");
+      router.replace(result.redirectTo ?? "/dashboard");
+      router.refresh();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Não foi possível autenticar.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -31,9 +52,9 @@ export default function LoginPage() {
             <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
               <ShieldCheck size={16} className="text-white" />
             </div>
-            <span className="text-lg font-semibold">CliniVerify</span>
+            <span className="text-lg font-semibold">RISA Verify</span>
           </div>
-          <p className="text-sm text-white/50">Clinical Review</p>
+          <p className="text-sm text-white/50">Portal médico</p>
 
           <h1 className="text-2xl font-semibold leading-snug mt-14 max-w-sm">
             Inteligência, integridade e confiança na revisão de documentos clínicos.
@@ -55,7 +76,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-white/35 leading-relaxed max-w-sm">
-          Ambiente de demonstração — dados sintéticos. O CliniVerify não realiza
+          Ambiente de demonstração — use somente dados sintéticos. A ferramenta não realiza
           diagnóstico, prescrição ou recomendação médica.
         </p>
       </section>
@@ -66,22 +87,24 @@ export default function LoginPage() {
             <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
               <ShieldCheck size={16} className="text-white" />
             </div>
-            <span className="text-lg font-semibold text-ink">CliniVerify</span>
+            <span className="text-lg font-semibold text-ink">RISA Verify</span>
           </div>
 
           <h2 className="text-xl font-semibold text-ink">Acesse sua conta</h2>
-          <p className="text-xs text-muted mt-1 mb-7">Demo environment — synthetic data only</p>
+          <p className="text-xs text-muted mt-1 mb-7">Entre com as credenciais do portal médico.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-ink mb-1.5">
-                E-mail
+              <label htmlFor="username" className="block text-sm font-medium text-ink mb-1.5">
+                Usuário
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
                 className="focus-ring w-full rounded-md border border-line bg-panel px-3.5 py-2.5 text-sm text-ink"
               />
             </div>
@@ -94,8 +117,10 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="focus-ring w-full rounded-md border border-line bg-panel px-3.5 py-2.5 pr-10 text-sm text-ink"
                 />
                 <button
@@ -109,34 +134,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-1.5 text-muted">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="rounded border-line"
-                />
-                Lembrar de mim
-              </label>
-              <span className="text-brand-dark cursor-default">Esqueceu a senha?</span>
-            </div>
+            {error && <p role="alert" className="rounded-md border border-rust/30 bg-rust/10 px-3 py-2 text-sm text-rust">{error}</p>}
 
             <button
               type="submit"
+              disabled={submitting}
               className="focus-ring w-full bg-brand hover:bg-brand-dark transition-colors text-white text-sm font-medium py-2.5 rounded-md shadow-card"
             >
-              Entrar
+              {submitting ? "Entrando..." : "Entrar"}
             </button>
           </form>
-
-          <div className="mt-6 rounded-md border border-line bg-panel px-4 py-3 text-xs text-muted leading-relaxed">
-            <span className="font-medium text-ink">Credenciais de demonstração</span>
-            <br />
-            E-mail: medico@iasx.demo
-            <br />
-            Senha: IASX@2026
-          </div>
         </div>
       </section>
     </main>

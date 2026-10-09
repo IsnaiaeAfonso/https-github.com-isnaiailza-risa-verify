@@ -9,16 +9,31 @@ const levelStyles: Record<Level, string> = {
   baixa: "bg-success-light text-success-dark border-success/20",
 };
 
+const confidenceStyles: Record<Level, string> = {
+  alta: "bg-success-light text-success-dark border-success/20",
+  media: "bg-amber-light text-amber border-amber/20",
+  baixa: "bg-rust-light text-rust border-rust/20",
+};
+
 const levelLabel: Record<Level, string> = {
   alta: "Alta",
   media: "Média",
   baixa: "Baixa",
 };
 
-export function LevelPill({ level, label }: { level: Level; label?: string }) {
+export function LevelPill({
+  level,
+  label,
+  meaning = "risk",
+}: {
+  level: Level;
+  label?: string;
+  meaning?: "confidence" | "risk";
+}) {
+  const styles = meaning === "confidence" ? confidenceStyles : levelStyles;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${levelStyles[level]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${styles[level]}`}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {label ?? levelLabel[level]}
@@ -31,7 +46,7 @@ const statusMeta: Record<CaseStatus, { label: string; className: string }> = {
   aguardando_upload: { label: "Aguardando documentos", className: "bg-ink/5 text-muted border-ink/10" },
   em_analise: { label: "Em análise", className: "bg-amber-light text-amber border-amber/20" },
   revisao_pendente: { label: "Revisão pendente", className: "bg-amber-light text-amber border-amber/20" },
-  revisao_concluida: { label: "Attested", className: "bg-success-light text-success-dark border-success/20" },
+  revisao_concluida: { label: "Revisão concluída", className: "bg-success-light text-success-dark border-success/20" },
 };
 
 export function StatusPill({ status }: { status: CaseStatus }) {

@@ -18,6 +18,7 @@ export interface ClinicalCase {
   timeline: TimelineEvent[];
   reviewDecisions?: ReviewDecision[];
   attestation?: Attestation;
+  reviewSnapshot?: ReviewSnapshot;
 }
 
 export interface ClinicalDocument {
@@ -29,6 +30,11 @@ export interface ClinicalDocument {
   sizeLabel: string;
   origin?: "user_upload" | "demo";
   fileStored?: boolean;
+  objectKey?: string;
+  storageProvider?: "aws-s3" | "local-demo";
+  encryptionStatus?: "kms" | "s3-managed" | "local-demo";
+  sha256?: string;
+  processingError?: string;
   extractedPages?: string[];
   extractionStatus?: "text_extracted" | "no_text" | "unreadable";
 }
@@ -94,10 +100,23 @@ export interface Attestation {
   attestationId: string;
   reviewer: string;
   completedAt: string;
-  network: "Solana Devnet";
-  transactionId: string;
   contentHash: string;
-  status: "confirmado";
+  status: "local";
+  snapshotVersion: string;
+  documentHashes: Array<{ documentId: string; documentName: string; sha256: string; hashScope: "original-pdf" | "extracted-content-and-metadata" }>;
+  analysisHash: string;
+  decisionsHash: string;
+}
+
+export interface ReviewSnapshot {
+  version: string;
+  createdAt: string;
+  reviewer: string;
+  documentHashes: Array<{ documentId: string; documentName: string; sha256: string; hashScope: "original-pdf" | "extracted-content-and-metadata" }>;
+  analysisHash: string;
+  decisionsHash: string;
+  contentHash: string;
+  source: "browser-local";
 }
 
 export interface JevItem {

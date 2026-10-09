@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCaseStore } from "@/lib/store";
 import AppShell from "@/components/AppShell";
@@ -84,10 +84,19 @@ export default function ProfessionalReviewPage() {
 
   const [index, setIndex] = useState(0);
   const [decisions, setDecisions] = useState<Record<string, LocalDecision>>({});
-  const [reviewer] = useState("Dr(a). Revisor(a) responsável");
+  const [reviewer] = useState("Dra. Ana Costa · Cardiologia");
   const [showAllEvidence, setShowAllEvidence] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [warning, setWarning] = useState("");
+
+  useEffect(() => {
+    if (!clinicalCase?.reviewDecisions?.length) return;
+    setDecisions(Object.fromEntries(clinicalCase.reviewDecisions.map((decision) => [decision.itemId, {
+      action: decision.action,
+      note: decision.note ?? "",
+      correctedValue: decision.correctedValue ?? "",
+    }])));
+  }, [clinicalCase?.id]);
 
   if (!clinicalCase) {
     return <AppShell><main className="flex-1 flex items-center justify-center text-muted text-sm">Caso não encontrado.</main></AppShell>;
@@ -109,26 +118,47 @@ export default function ProfessionalReviewPage() {
 
   function setAction(action: ReviewAction) {
     setWarning("");
-    setDecisions((previous) => ({
-      ...previous,
+    const updated = {
+      ...decisions,
       [item.id]: {
         action,
-        note: previous[item.id]?.note ?? "",
-        correctedValue: previous[item.id]?.correctedValue ?? "",
+        note: decisions[item.id]?.note ?? "",
+        correctedValue: decisions[item.id]?.correctedValue ?? "",
       },
-    }));
+    };
+    setDecisions(updated);
+    submitDecisions(activeCase.id, toReviewDecisions(updated));
+  }
+
+  function toReviewDecisions(source: Record<string, LocalDecision>): ReviewDecision[] {
+    return items.flatMap((reviewItem) => {
+      const saved = source[reviewItem.id];
+      if (!saved?.action || (saved.action === "corrigido" && !saved.correctedValue.trim())) return [];
+      return [{
+        itemId: reviewItem.id,
+        itemType: reviewItem.type,
+        itemTitle: reviewItem.title,
+        action: saved.action,
+        note: saved.note.trim() || undefined,
+        correctedValue: saved.action === "corrigido" ? saved.correctedValue.trim() : undefined,
+        reviewer,
+        decidedAt: new Date().toISOString(),
+      }];
+    });
   }
 
   function setField(field: "note" | "correctedValue", value: string) {
-    setDecisions((previous) => ({
-      ...previous,
+    const updated = {
+      ...decisions,
       [item.id]: {
-        action: previous[item.id]?.action ?? "corrigido",
-        note: previous[item.id]?.note ?? "",
-        correctedValue: previous[item.id]?.correctedValue ?? "",
+        action: decisions[item.id]?.action ?? "corrigido",
+        note: decisions[item.id]?.note ?? "",
+        correctedValue: decisions[item.id]?.correctedValue ?? "",
         [field]: value,
       },
-    }));
+    };
+    setDecisions(updated);
+    submitDecisions(activeCase.id, toReviewDecisions(updated));
   }
 
   function goTo(newIndex: number) {
@@ -168,21 +198,10 @@ export default function ProfessionalReviewPage() {
     setShowSummary(true);
   }
 
-  function finishReview() {
-    const reviewDecisions: ReviewDecision[] = items.map((reviewItem) => ({
-      itemId: reviewItem.id,
-      itemType: reviewItem.type,
-      itemTitle: reviewItem.title,
-      action: decisions[reviewItem.id].action,
-      note: decisions[reviewItem.id].note.trim() || undefined,
-      correctedValue: decisions[reviewItem.id].action === "corrigido"
-        ? decisions[reviewItem.id].correctedValue.trim()
-        : undefined,
-      reviewer,
-      decidedAt: new Date().toISOString(),
-    }));
+  async function finishReview() {
+    const reviewDecisions = toReviewDecisions(decisions);
     submitDecisions(activeCase.id, reviewDecisions);
-    completeReview(activeCase.id, reviewer);
+    await completeReview(activeCase.id, reviewer, reviewDecisions);
     router.push(`/cases/${activeCase.id}/attestation`);
   }
 
@@ -213,7 +232,7 @@ export default function ProfessionalReviewPage() {
             <Info size={18} className="text-brand-dark shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-ink">Revisão humana</p>
-              <p className="text-sm text-muted mt-1 leading-relaxed">Revise as informações organizadas pelo CliniVerify antes de concluir o caso. O profissional confirma, corrige ou rejeita cada item; a atestação só acontece depois da revisão.</p>
+              <p className="text-sm text-muted mt-1 leading-relaxed">Revise as informações organizadas pelo RISA Verify antes de concluir o caso. O profissional confirma, corrige ou rejeita cada item; a atestação só ocorre após a revisão.</p>
             </div>
           </Card>
 
@@ -242,7 +261,7 @@ export default function ProfessionalReviewPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     {item.category && <span className="text-xs text-muted rounded-full bg-ink/5 px-2.5 py-1">{item.category}</span>}
-                    {item.confidence && <LevelPill level={item.confidence} label={`Sinal do sistema · confiança ${item.confidence}`} />}
+                    {item.confidence && <LevelPill level={item.confidence} meaning="confidence" label={`Sinal do sistema · confiança ${item.confidence}`} />}
                     {item.severity && <LevelPill level={item.severity} label={`Severidade ${item.severity}`} />}
                   </div>
                   <h3 className="text-base font-semibold text-ink mt-3">{item.title}</h3>
@@ -287,7 +306,7 @@ export default function ProfessionalReviewPage() {
 
                 <Card className="px-5 py-5">
                   <h4 className="text-sm font-semibold text-ink mb-1">Decisão do profissional</h4>
-                  <p className="text-xs text-muted mb-3">O sinal de confiança/severidade apoia a revisão e não representa uma decisão clínica.</p>
+                  <p className="text-xs text-muted mb-3">Os indicadores de confiança e severidade apoiam a revisão, mas não constituem uma decisão clínica.</p>
                   <div className="space-y-2">
                     {actionOptions.map((option) => {
                       const Icon = ACTION_ICONS[option.key];
@@ -304,7 +323,7 @@ export default function ProfessionalReviewPage() {
                   {decision?.action === "corrigido" && (
                     <div className="mt-4 space-y-3">
                       <div className="rounded-md border border-line bg-paper px-3 py-2.5">
-                        <p className="text-xs font-medium text-muted">Valor identificado pelo CliniVerify</p>
+                        <p className="text-xs font-medium text-muted">Valor identificado pelo RISA Verify</p>
                         <p className="text-sm text-ink mt-1 leading-relaxed">{correctionOriginal}</p>
                       </div>
                       <div>

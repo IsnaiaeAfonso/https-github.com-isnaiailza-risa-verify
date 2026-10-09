@@ -7,7 +7,7 @@ import { useCaseStore } from "@/lib/store";
 import AppShell from "@/components/AppShell";
 import CaseHeader from "@/components/CaseHeader";
 import { Card } from "@/components/ui";
-import { CheckCircle2, Copy, ArrowRight } from "lucide-react";
+import { CheckCircle2, Copy, ArrowRight, Fingerprint } from "lucide-react";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" });
@@ -89,35 +89,24 @@ export default function AttestationPage() {
 
             <div className="mt-6 space-y-2 text-left max-w-xs mx-auto">
               {[
-                "Revisão profissional confirmada",
-                "Integridade da revisão calculada",
-                "Attestation registrada na blockchain",
+                "Revisão profissional registrada",
+                "Registro da revisão calculado neste navegador",
+                "Nenhuma transação Solana foi enviada",
               ].map((line) => (
                 <div key={line} className="flex items-center gap-2 text-sm text-ink/85">
-                  <CheckCircle2 size={15} className="text-success-dark shrink-0" />
+                  {line.includes("Nenhuma") ? <Fingerprint size={15} className="text-muted shrink-0" /> : <CheckCircle2 size={15} className="text-success-dark shrink-0" />}
                   {line}
                 </div>
               ))}
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-3 text-left">
-              <div className="rounded-md border border-line bg-paper px-4 py-3">
-                <div className="text-xs text-muted mb-1">Blockchain</div>
-                <div className="text-sm text-ink font-medium">{attestation.network}</div>
-              </div>
-              <div className="rounded-md border border-line bg-paper px-4 py-3">
-                <div className="text-xs text-muted mb-1">Transaction</div>
-                <div className="text-sm text-ink font-mono truncate">{truncateMiddle(attestation.transactionId)}</div>
-              </div>
-            </div>
-
-            <div className="mt-3 space-y-2.5 text-left">
+            <div className="mt-7 space-y-2.5 text-left">
               <CopyField label="ID da atestação" value={attestation.attestationId} />
-              <CopyField label="Hash do conteúdo" value={attestation.contentHash} />
+              <CopyField label="Hash do snapshot local" value={attestation.contentHash} />
             </div>
 
             <p className="text-xs text-muted mt-4">
-              {attestation.reviewer} · concluído em {formatDateTime(attestation.completedAt)}
+              {attestation.reviewer} · concluída em {formatDateTime(attestation.completedAt)}
             </p>
 
             <div className="flex items-center justify-center gap-3 mt-7">
@@ -125,18 +114,16 @@ export default function AttestationPage() {
                 href={`/cases/${clinicalCase.id}/verify`}
                 className="focus-ring inline-flex items-center gap-1.5 bg-brand hover:bg-brand-dark transition-colors text-white text-sm font-medium px-4 py-2.5 rounded-md shadow-card"
               >
-                Ver verificação <ArrowRight size={14} />
+                Verificar integridade <ArrowRight size={14} />
               </Link>
               <Link href="/dashboard" className="text-sm text-muted hover:text-ink transition-colors">
-                Voltar ao dashboard
+                Voltar ao painel médico
               </Link>
             </div>
           </Card>
 
           <p className="text-xs text-muted mt-6 leading-relaxed text-center">
-            Transação simulada para fins de demonstração — nenhum valor foi enviado à rede Solana
-            Devnet real. Em produção, este passo ancoraria um hash criptográfico do conteúdo
-            revisado, sem publicar dados clínicos on-chain.
+            Este hash foi calculado neste navegador a partir do registro da revisão. Ele não foi publicado nem confirmado na Solana; a revisão e os documentos permanecem neste navegador.
           </p>
         </div>
       </main>

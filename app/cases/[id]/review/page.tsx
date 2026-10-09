@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useCaseStore } from "@/lib/store";
+import { useDoctorPreferences } from "@/lib/doctorPreferences";
 import AppShell from "@/components/AppShell";
 import CaseHeader from "@/components/CaseHeader";
 import ClinicalAssistant from "@/components/ClinicalAssistant";
+import RisaClinicalListening from "@/components/RisaClinicalListening";
 import ConflictModal from "@/components/ConflictModal";
 import TrendChart from "@/components/TrendChart";
 import { Card, StatBlock, LevelPill, EvidenceQuote } from "@/components/ui";
@@ -14,7 +16,7 @@ import { DEMO_CASE_ID, labTrend } from "@/lib/mockData";
 import { ClinicalCase, Conflict, EvidenceRef, Finding } from "@/lib/types";
 import { AlertTriangle, UserCheck, ShieldCheck, FileText, ExternalLink } from "lucide-react";
 
-type Tab = "geral" | "timeline" | "conflitos" | "lacunas" | "estruturada";
+type Tab = "geral" | "timeline" | "conflitos" | "lacunas" | "estruturada" | "risa";
 
 function formatDate(iso: string) {
   if (!iso) return "Data não informada";
@@ -50,6 +52,22 @@ export default function ReviewPage() {
   const [tab, setTab] = useState<Tab>("geral");
   const [openConflict, setOpenConflict] = useState<Conflict | null>(null);
   const [openEvidence, setOpenEvidence] = useState<{ finding: Finding; evidence: EvidenceRef } | null>(null);
+  const preferences = useDoctorPreferences();
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "risa") {
+      setTab("risa");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === "risa" && !preferences.showRisaSection) {
+      setTab("geral");
+    }
+    if (tab === "timeline" && !preferences.showTimeline) {
+      setTab("geral");
+    }
+  }, [preferences, tab]);
 
   if (!clinicalCase) {
     return (
@@ -67,10 +85,11 @@ export default function ReviewPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: "geral", label: "Visão geral" },
-    { key: "timeline", label: "Timeline" },
+    ...(preferences.showTimeline ? [{ key: "timeline" as const, label: "Linha do tempo" }] : []),
     { key: "conflitos", label: `Conflitos (${clinicalCase.conflicts.length})` },
     { key: "lacunas", label: `Lacunas (${clinicalCase.gaps.length})` },
     { key: "estruturada", label: "Revisão estruturada" },
+    ...(preferences.showRisaSection ? [{ key: "risa" as const, label: "RISA — Escuta Clínica" }] : []),
   ];
 
   return (
@@ -98,12 +117,16 @@ export default function ReviewPage() {
               <Card className="px-5 py-4">
                 <StatBlock label="Achados" value={clinicalCase.findings.length} />
               </Card>
-              <Card className="px-5 py-4">
-                <StatBlock label="Conflitos" value={clinicalCase.conflicts.length} />
-              </Card>
-              <Card className="px-5 py-4">
-                <StatBlock label="Lacunas" value={clinicalCase.gaps.length} />
-              </Card>
+              {preferences.showRiskCards && (
+                <Card className="px-5 py-4">
+                  <StatBlock label="Conflitos" value={clinicalCase.conflicts.length} />
+                </Card>
+              )}
+              {preferences.showRiskCards && (
+                <Card className="px-5 py-4">
+                  <StatBlock label="Lacunas" value={clinicalCase.gaps.length} />
+                </Card>
+              )}
             </div>
 
             <div className="flex items-center gap-1 border-b border-line mb-6 overflow-x-auto">
@@ -129,7 +152,7 @@ export default function ReviewPage() {
                         <span className="text-xs text-muted">{f.category}</span>
                         <h4 className="text-sm font-medium text-ink mt-0.5">{f.title}</h4>
                       </div>
-                      <LevelPill level={f.confidence} label={`Confiança ${f.confidence === "alta" ? "alta" : f.confidence === "media" ? "média" : "baixa"}`} />
+                      <LevelPill level={f.confidence} meaning="confidence" label={`Confiança ${f.confidence === "alta" ? "alta" : f.confidence === "media" ? "média" : "baixa"}`} />
                     </div>
                     {clinicalCase.reviewDecisions?.filter((decision) => decision.itemId === f.id).map((decision) => (
                       <span key={`${decision.itemId}-${decision.decidedAt}`} className="inline-flex mt-2 rounded-full border border-success/20 bg-success-light px-2.5 py-0.5 text-xs font-medium text-success-dark">Revisão: {decisionLabel[decision.action]}</span>
@@ -157,7 +180,7 @@ export default function ReviewPage() {
                     <TrendChart points={trend.points} metric={trend.metric} unit={trend.unit} />
                   </Card>
                 ) : (
-                  <p className="text-sm text-muted">Sem dados suficientes para montar uma tendência.</p>
+                  <p className="text-sm text-muted">Não há dados suficientes para exibir uma tendência.</p>
                 )}
                 <Card className="px-5 py-4">
                   <ol className="relative border-l border-line ml-1.5 space-y-5">
@@ -172,7 +195,7 @@ export default function ReviewPage() {
                       </li>
                     ))}
                     {clinicalCase.timeline.length === 0 && (
-                      <p className="text-sm text-muted">Sem eventos suficientes para montar uma timeline.</p>
+                      <p className="text-sm text-muted">Não há eventos suficientes para exibir a linha do tempo.</p>
                     )}
                   </ol>
                 </Card>
@@ -236,8 +259,8 @@ export default function ReviewPage() {
                 <Card className="px-5 py-4 mb-5 flex items-center gap-3 bg-brand-light/40 border-brand/20">
                   <UserCheck size={18} className="text-brand-dark shrink-0" />
                   <p className="text-sm text-ink">
-                    <strong className="font-semibold">{requiredCount}</strong> de {jevItems.length} itens foram
-                    sinalizados como necessitando revisão humana antes da conclusão do caso.
+                    <strong className="font-semibold">{requiredCount}</strong> de {jevItems.length} itens precisam de
+                    revisão humana antes da conclusão do caso.
                   </p>
                 </Card>
                 <p className="text-xs text-muted mb-3">Indicadores de fluxo para apoiar a revisão humana; não representam diagnóstico ou decisão médica.</p>
@@ -263,6 +286,7 @@ export default function ReviewPage() {
                 </div>
               </div>
             )}
+            {tab === "risa" && <RisaClinicalListening clinicalCase={clinicalCase} />}
             {(clinicalCase.status === "revisao_pendente" || clinicalCase.status === "revisao_concluida") && (
               <ClinicalAssistant key={clinicalCase.id} clinicalCase={clinicalCase} />
             )}

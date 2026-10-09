@@ -31,16 +31,16 @@ export default function ClinicalAssistant({ clinicalCase }: { clinicalCase: Clin
     <section className="mt-8 border-t border-line pt-6" aria-labelledby="clinical-assistant-title">
       <div className="mb-4">
         <h2 id="clinical-assistant-title" className="text-sm font-semibold text-ink">
-          Perguntas sobre este caso
+          RISA — Assistente clínica
         </h2>
         <p className="text-xs text-muted mt-1">
-          Consulte os achados, evidências e evolução identificados nesta análise.
+          Consulte os achados e as evidências do caso. A RISA organiza as referências para apoiar a revisão profissional.
         </p>
       </div>
 
       {questions.length === 0 ? (
         <p className="text-xs text-muted mb-4" role="status">
-          Após a análise, perguntas relevantes sobre o caso aparecerão aqui.
+          Após a análise, perguntas relevantes sobre o caso serão exibidas aqui.
         </p>
       ) : (
         <>

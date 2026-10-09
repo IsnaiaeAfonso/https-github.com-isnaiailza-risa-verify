@@ -4,3 +4,7 @@ out
 .DS_Store
 *.log
 tsconfig.tsbuildinfo
+.env
+.env.*
+!.env.example
+data/

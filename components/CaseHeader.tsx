@@ -15,7 +15,7 @@ export default function CaseHeader({
     <div className="flex items-start justify-between gap-4 flex-wrap px-6 pt-6 pb-4 border-b border-line bg-panel">
       <div>
         <Link href="/dashboard" className="text-xs text-muted hover:text-brand transition-colors">
-          ← Dashboard
+          ← Painel médico
         </Link>
         <div className="flex items-center gap-3 mt-1.5">
           <h1 className="text-lg font-semibold text-ink">{clinicalCase.reference}</h1>

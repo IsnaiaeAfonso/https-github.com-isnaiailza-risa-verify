@@ -9,11 +9,11 @@ import { Card } from "@/components/ui";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 const STAGES = [
-  "Documentos corrigidos",
+  "Documentos preparados",
   "Informações extraídas",
   "Evidências identificadas",
-  "Comparando informações",
-  "Identificando possíveis conflitos",
+  "Comparando as informações",
+  "Identificando possíveis divergências",
   "Preparando revisão",
 ];
 
@@ -53,12 +53,12 @@ export default function AnalyzingPage() {
   return (
     <AppShell>
       <main className="flex-1 bg-paper flex flex-col">
-        <CaseHeader clinicalCase={clinicalCase} subtitle="Simulação da análise de documentos" />
+        <CaseHeader clinicalCase={clinicalCase} subtitle="Demonstração da análise de documentos" />
         <div className="flex-1 flex items-center justify-center px-6 py-16">
           <Card className="w-full max-w-md px-6 py-6">
-            <h2 className="text-base font-semibold text-ink mb-1">Analisando caso...</h2>
+            <h2 className="text-base font-semibold text-ink mb-1">Analisando o caso...</h2>
             <p className="text-sm text-muted mb-6">
-              Estamos processando os seus documentos. Isso pode levar alguns segundos.
+              Estamos processando os documentos. Isso pode levar alguns segundos.
             </p>
 
             <div className="space-y-3.5">
