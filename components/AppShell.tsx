@@ -8,12 +8,12 @@ import {
   Settings,
   Search,
   Bell,
-  ShieldCheck,
   FileCheck2,
   BookOpen,
   LockKeyhole,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
+import RisaLogo from "@/components/RisaLogo";
 
 const NAV = [
   {
@@ -62,17 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-paper">
       <aside className="w-14 md:w-60 shrink-0 bg-navy-dark text-white/90 flex flex-col">
         <div className="px-2 py-4 md:px-5 md:py-6">
-          <div className="flex items-center gap-2">
-            <div className="mx-auto md:mx-0 h-7 w-7 shrink-0 rounded-md bg-brand flex items-center justify-center">
-              <ShieldCheck size={15} className="text-white" />
-            </div>
-            <span className="hidden md:inline text-sm font-semibold tracking-wide text-white">
-              RISA
-            </span>
-          </div>
-          <p className="hidden md:block text-[11px] text-white/45 mt-1 leading-snug">
-            Verify
-          </p>
+          <RisaLogo compact className="mx-auto md:mx-0" />
         </div>
 
         <nav className="flex-1 px-1.5 md:px-3 space-y-0.5">

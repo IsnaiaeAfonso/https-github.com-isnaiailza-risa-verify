@@ -49,13 +49,15 @@ export default function CasesPage() {
   const [status, setStatus] = useState("todos");
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [documentsError, setDocumentsError] = useState("");
+  const [storageConfigured, setStorageConfigured] = useState(true);
 
   async function refreshUploadedDocuments() {
     try {
       const response = await fetch("/api/doctor-documents", { cache: "no-store" });
       if (!response.ok) throw new Error("Não foi possível consultar os PDFs enviados.");
-      const payload = await response.json() as { documents?: UploadedDocument[] };
+      const payload = await response.json() as { documents?: UploadedDocument[]; storageConfigured?: boolean };
       setUploadedDocuments(payload.documents ?? []);
+      setStorageConfigured(payload.storageConfigured ?? true);
       setDocumentsError("");
     } catch (error) {
       setDocumentsError(error instanceof Error ? error.message : "Não foi possível consultar os PDFs enviados.");
@@ -212,7 +214,7 @@ export default function CasesPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-ink">PDFs recebidos de pacientes</h2>
-                <p className="mt-1 text-sm text-muted">Arquivos armazenados após o envio pelo paciente.</p>
+                <p className="mt-1 text-sm text-muted">PDFs enviados pelo paciente ao médico responsável.</p>
               </div>
               <button
                 type="button"
@@ -225,6 +227,11 @@ export default function CasesPage() {
             <p className="mt-3 rounded-md border border-amber/30 bg-amber/10 px-3 py-2 text-xs leading-5 text-amber">
               Ambiente de demonstração. Use apenas PDFs sintéticos; não envie documentos clínicos nem dados pessoais reais.
             </p>
+            {!storageConfigured && (
+              <p className="mt-3 rounded-md border border-rust/30 bg-rust/10 px-3 py-2 text-xs leading-5 text-rust">
+                Armazenamento persistente não conectado. Novos PDFs não serão aceitos até conectar um Blob privado da Vercel.
+              </p>
+            )}
             {documentsError ? (
               <p className="mt-4 text-sm text-rust">{documentsError}</p>
             ) : uploadedDocuments.length === 0 ? (

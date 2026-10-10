@@ -51,10 +51,10 @@ export default function TrendChart({
             strokeWidth={1}
           />
         ))}
-        <path d={path} fill="none" stroke="#2F63E5" strokeWidth={2} />
+        <path d={path} fill="none" stroke="#1686E8" strokeWidth={2} />
         {coords.map((c, i) => (
           <g key={i}>
-            <circle cx={c.x} cy={c.y} r={3.5} fill="#2F63E5" />
+            <circle cx={c.x} cy={c.y} r={3.5} fill="#1686E8" />
             <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize={11} fill="#10161C" fontFamily="var(--font-plex-mono)">
               {c.value}
             </text>

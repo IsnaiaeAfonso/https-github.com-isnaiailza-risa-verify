@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="risaBlue" x1="18" y1="12" x2="94" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1686E8"/>
+      <stop offset=".56" stop-color="#18B9CF"/>
+      <stop offset="1" stop-color="#0E5DB4"/>
+    </linearGradient>
+  </defs>
+  <path d="M99 12H51C25 12 10 28 10 51v17c0 10 4 18 11 24-7 6-11 14-11 24v2h31v-5c0-13 8-21 22-21h20c15 0 25-10 25-25V47c0-14-10-24-25-24H53c-6 0-10 3-10 8s4 8 10 8h42c5 0 8 3 8 8v19c0 6-3 9-10 9H63c-9 0-17 3-23 8-5-4-8-10-8-17V51c0-14 8-22 22-22h45V12Z" fill="url(#risaBlue)"/>
+  <path d="M12 70h29l11-13 13 29 15-44 12 28h17" stroke="#F7FEFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+</svg>

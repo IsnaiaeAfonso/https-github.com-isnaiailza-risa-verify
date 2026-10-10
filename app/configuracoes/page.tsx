@@ -54,13 +54,13 @@ const TOGGLE_CONFIGS: ToggleConfig[] = [
 export default function ConfiguracoesPage() {
   const [preferences, setPreferences] = useState<DoctorPreferences>(DEFAULT_DOCTOR_PREFERENCES);
   const [saved, setSaved] = useState(false);
-  const [patientLink, setPatientLink] = useState("http://127.0.0.1:3114/patient-upload/CV-DEMO-00123");
+  const [patientLink, setPatientLink] = useState("https://risa-verify.vercel.app/patient-upload/CV-DEMO-00123");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setPreferences(getDoctorPreferences());
     if (typeof window !== "undefined") {
-      const origin = window.location.origin || "http://127.0.0.1:3114";
+      const origin = window.location.origin;
       setPatientLink(`${origin}/patient-upload/CV-DEMO-00123`);
     }
   }, []);

@@ -1,11 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { readPrivateBlobJson, writePrivateBlobJson } from "@/lib/privateBlobJson";
+import { hasVercelBlobToken, isVercelRuntime } from "@/lib/patientUploadConfig";
 
 export type ConsentStatus = "ACCEPTED" | "CANCELLED";
 
 export interface ConsentRecord {
   consentId: string;
   caseId: string;
+  doctorName?: string;
   termsVersion: string;
   timestamp: string;
   consentStatus: ConsentStatus;
@@ -25,6 +28,12 @@ async function readConsents(): Promise<Record<string, ConsentRecord>> {
 }
 
 export async function registerConsent(record: ConsentRecord): Promise<ConsentRecord> {
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    await writePrivateBlobJson(`risa-verify/consents/${record.consentId}.json`, record);
+    return record;
+  }
+
   const records = await readConsents();
   records[record.consentId] = record;
   await mkdir(join(process.cwd(), "data"), { recursive: true });
@@ -33,6 +42,11 @@ export async function registerConsent(record: ConsentRecord): Promise<ConsentRec
 }
 
 export async function getConsent(consentId: string): Promise<ConsentRecord | undefined> {
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    return readPrivateBlobJson<ConsentRecord>(`risa-verify/consents/${consentId}.json`);
+  }
+
   const records = await readConsents();
   return records[consentId];
 }

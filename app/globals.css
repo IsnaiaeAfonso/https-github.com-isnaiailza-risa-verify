@@ -12,12 +12,12 @@ body {
 }
 
 ::selection {
-  background-color: #0E6F63;
+  background-color: #18B9CF;
   color: white;
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid #0E6F63;
+  outline: 2px solid #1686E8;
   outline-offset: 2px;
 }
 

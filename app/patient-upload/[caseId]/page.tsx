@@ -11,8 +11,29 @@ import {
   Stethoscope,
   UserRound,
 } from "lucide-react";
+import { upload } from "@vercel/blob/client";
+import RisaLogo from "@/components/RisaLogo";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const TERMS_VERSION = "MVP-DEMO-2026-10";
+const DEFAULT_DOCTORS = [
+  "Dra. Laura Santos",
+  "Dr. Rafael Neto",
+  "Dr. Gustavo Medeiros",
+  "Dr. Omar Faria",
+  "Dr. Caio Mendes",
+  "Dr. Vinícius Prado",
+  "Dr. Fernando Costa",
+  "Dr. Theo Santos",
+  "Dr. Ana Rocha",
+  "Dr. Camila Lopes",
+];
+
+interface UploadApiInfo {
+  doctors?: string[];
+  uploadMode?: "vercel-blob" | "server" | "unavailable";
+  storageConfigured?: boolean;
+}
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -253,18 +274,22 @@ function LegacyPatientUploadPage() {
 }
 
 export default function PatientUploadPage() {
+  const params = useParams<{ caseId: string }>();
+  const caseId = params.caseId;
   const [consentState, setConsentState] = useState<"pending" | "accepted" | "cancelled" | "error">("pending");
   const [consentId, setConsentId] = useState("");
   const [patientCpf, setPatientCpf] = useState("");
   const [doctorName, setDoctorName] = useState("");
   const [doctors, setDoctors] = useState<string[]>([]);
+  const [uploadMode, setUploadMode] = useState<UploadApiInfo["uploadMode"]>("unavailable");
+  const [storageConfigured, setStorageConfigured] = useState(false);
   const [publicOrigin, setPublicOrigin] = useState(process.env.NEXT_PUBLIC_APP_URL ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const patientCpfDigits = patientCpf.replace(/\D/g, "");
   const patientCpfValid = patientCpfDigits.length === 11 && /^\d+$/.test(patientCpfDigits);
-  const uploadUrl = `${publicOrigin || "https://seu-dominio-publico"}/patient-upload/CV-DEMO-00123`;
+  const uploadUrl = `${publicOrigin || "https://seu-dominio-publico"}/patient-upload/${encodeURIComponent(caseId)}`;
 
   function selectPdf(selectedFile: File | undefined) {
     if (!selectedFile) return;
@@ -294,26 +319,34 @@ export default function PatientUploadPage() {
 
   useEffect(() => {
     setPublicOrigin(window.location.origin);
-    fetch("/api/patient-upload")
+    fetch(`/api/patient-upload?caseId=${encodeURIComponent(caseId)}`)
       .then(async (response) => {
-        const payload = await response.json() as { doctors?: string[] };
-        if (response.ok) setDoctors(payload.doctors ?? []);
+        const payload = await response.json() as UploadApiInfo;
+        if (response.ok) {
+          setDoctors(payload.doctors?.length ? payload.doctors : DEFAULT_DOCTORS);
+          setUploadMode(payload.uploadMode ?? "unavailable");
+          setStorageConfigured(payload.storageConfigured ?? false);
+        } else {
+          setDoctors(DEFAULT_DOCTORS);
+        }
       })
-      .catch(() => setDoctors([]));
-    const stored = window.localStorage.getItem("iasx-demo-consent");
+      .catch(() => setDoctors(DEFAULT_DOCTORS));
+    const consentStorageKey = `risa-upload-consent:${caseId}`;
+    const stored = window.localStorage.getItem(consentStorageKey);
     if (!stored) return;
     try {
-      const parsed = JSON.parse(stored) as { consentId?: string; status?: string; doctorName?: string };
-      if (parsed.doctorName) setDoctorName(parsed.doctorName);
+      const parsed = JSON.parse(stored) as { consentId?: string; status?: string; doctorName?: string; caseId?: string };
+      if (parsed.caseId !== caseId || !parsed.doctorName) return;
+      setDoctorName(parsed.doctorName);
       if (parsed.status === "accepted" && parsed.consentId) {
         setConsentId(parsed.consentId);
         setConsentState("accepted");
       }
       if (parsed.status === "cancelled") setConsentState("cancelled");
     } catch {
-      window.localStorage.removeItem("iasx-demo-consent");
+      window.localStorage.removeItem(consentStorageKey);
     }
-  }, []);
+  }, [caseId]);
 
   async function registerConsent(action: "ACCEPTED" | "CANCELLED") {
     if (!patientCpfValid && action === "ACCEPTED") {
@@ -331,11 +364,11 @@ export default function PatientUploadPage() {
       const response = await fetch("/api/consent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId: "CV-DEMO-00123", action }),
+        body: JSON.stringify({ caseId, doctorName, action }),
       });
       const payload = await response.json() as { consentId?: string; error?: string };
       if (!response.ok || !payload.consentId) throw new Error(payload.error ?? "Não foi possível registrar o consentimento.");
-      window.localStorage.setItem("iasx-demo-consent", JSON.stringify({ consentId: payload.consentId, status: action === "ACCEPTED" ? "accepted" : "cancelled", doctorName }));
+      window.localStorage.setItem(`risa-upload-consent:${caseId}`, JSON.stringify({ consentId: payload.consentId, status: action === "ACCEPTED" ? "accepted" : "cancelled", doctorName, caseId }));
       setConsentId(payload.consentId);
       setConsentState(action === "ACCEPTED" ? "accepted" : "cancelled");
     } catch (error) {
@@ -353,20 +386,40 @@ export default function PatientUploadPage() {
     setStatus("sending");
     const data = new FormData();
     data.append("file", file);
-    data.append("caseId", "CV-DEMO-00123");
+    data.append("caseId", caseId);
     data.append("consentId", consentId);
-    data.append("termsVersion", "MVP-DEMO-2026-10");
+    data.append("termsVersion", TERMS_VERSION);
     data.append("source", "patient-demo-link");
     data.append("doctorName", doctorName);
     try {
-      const response = await fetch("/api/patient-upload", { method: "POST", body: data });
-      const payload = await response.json() as { error?: string; queueStatus?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Não foi possível enviar o documento.");
-      if (payload.queueStatus && payload.queueStatus !== "stored") {
-        throw new Error("O PDF não foi armazenado. Tente novamente.");
+      if (uploadMode === "vercel-blob") {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120) || "exame.pdf";
+        await upload(`risa-verify/patient-pdfs/${caseId}/${crypto.randomUUID()}-${safeName}`, file, {
+          access: "private",
+          handleUploadUrl: "/api/patient-upload/blob",
+          contentType: "application/pdf",
+          multipart: file.size > 5 * 1024 * 1024,
+          clientPayload: JSON.stringify({
+            caseId,
+            doctorName,
+            consentId,
+            termsVersion: TERMS_VERSION,
+            source: "patient-demo-link",
+            fileName: file.name,
+          }),
+        });
+      } else if (uploadMode === "server") {
+        const response = await fetch("/api/patient-upload", { method: "POST", body: data });
+        const payload = await response.json() as { error?: string; queueStatus?: string };
+        if (!response.ok) throw new Error(payload.error ?? "Não foi possível enviar o documento.");
+        if (payload.queueStatus && payload.queueStatus !== "stored") {
+          throw new Error("O PDF não foi armazenado. Tente novamente.");
+        }
+      } else {
+        throw new Error("O armazenamento do portal ainda não está conectado. O PDF não foi enviado; avise o médico responsável.");
       }
       setStatus("sent");
-      setMessage(`${file.name} enviado ao IASX com sucesso.`);
+      setMessage(`${file.name} enviado ao RISA Verify e armazenado para o médico selecionado.`);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Não foi possível enviar o documento.");
@@ -377,7 +430,8 @@ export default function PatientUploadPage() {
     return (
       <main className="min-h-screen bg-paper px-4 py-12">
         <section className="mx-auto max-w-2xl rounded-3xl border border-line bg-panel p-8 shadow-card">
-          <h1 className="text-2xl font-semibold text-ink">Compartilhamento cancelado</h1>
+          <RisaLogo tone="dark" />
+          <h1 className="mt-7 text-2xl font-semibold text-ink">Compartilhamento cancelado</h1>
           <p className="mt-3 text-sm leading-6 text-muted">Nenhum documento foi enviado. Você pode fechar esta janela.</p>
           <button type="button" onClick={() => window.close()} className="mt-6 rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white">FECHAR</button>
         </section>
@@ -389,16 +443,19 @@ export default function PatientUploadPage() {
     <main className="min-h-screen bg-paper px-4 py-8 sm:px-6">
       <section className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-line bg-panel shadow-card">
         <div className="bg-navy-dark px-7 py-9 text-white sm:px-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/50">RISA Verify</p>
-          <h1 className="mt-2 text-2xl font-semibold">Compartilhamento de documentos clínicos</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">Caso fictício: CV-DEMO-00123. Esta experiência usa apenas dados de demonstração.</p>
+          <div className="flex flex-wrap items-center justify-between gap-5">
+            <RisaLogo tone="light" />
+            <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/65">Envio seguro do paciente</span>
+          </div>
+          <h1 className="mt-7 text-2xl font-semibold">Compartilhamento de documentos clínicos</h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">Caso: {caseId}. Envie o PDF ao médico selecionado.</p>
         </div>
         <div className="p-6 sm:p-8">
           {consentState === "accepted" ? (
             <div className="space-y-5">
               <div className="rounded-2xl border border-success/30 bg-success/10 p-5">
                 <h2 className="text-lg font-semibold text-ink">Autorização registrada</h2>
-                <p className="mt-2 text-sm text-muted">Médico responsável: {doctorName || "não selecionado"}. Consentimento: {consentId}.</p>
+                <p className="mt-2 text-sm text-muted">Médico responsável: {doctorName || "não selecionado"}. O consentimento é específico para o caso {caseId}.</p>
               </div>
               <label className="block text-sm font-medium text-ink" htmlFor="upload-doctor-name">
                 Médico responsável
@@ -406,13 +463,13 @@ export default function PatientUploadPage() {
                   id="upload-doctor-name"
                   value={doctorName}
                   onChange={(event) => {
-                    setDoctorName(event.target.value);
-                    const stored = window.localStorage.getItem("iasx-demo-consent");
-                    if (stored) {
-                      const parsed = JSON.parse(stored) as { consentId?: string; status?: string };
-                      window.localStorage.setItem("iasx-demo-consent", JSON.stringify({ ...parsed, doctorName: event.target.value }));
-                    }
-                    setMessage("");
+                    const nextDoctor = event.target.value;
+                    if (nextDoctor === doctorName) return;
+                    setDoctorName(nextDoctor);
+                    setConsentId("");
+                    setConsentState("pending");
+                    window.localStorage.removeItem(`risa-upload-consent:${caseId}`);
+                    setMessage("O médico foi alterado. Revise e aceite novamente para registrar o consentimento.");
                   }}
                   className="focus-ring mt-2 w-full rounded-md border border-line bg-panel px-3.5 py-2.5 text-sm text-ink"
                   required
@@ -502,17 +559,22 @@ export default function PatientUploadPage() {
               </div>
               <div className="rounded-2xl border border-brand/30 bg-brand-light/40 p-5">
                 <p className="text-sm font-semibold text-ink">É necessário apenas o aceite explícito</p>
-                <p className="mt-2 text-sm leading-6 text-muted">Esta experiência não coleta CPF, endereço, telefone, e-mail ou qualquer dado pessoal. Os dados apresentados são fictícios.</p>
+                <p className="mt-2 text-sm leading-6 text-muted">Use apenas dados de demonstração. O envio exige consentimento explícito e vai para o médico selecionado.</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <a href="/terms" className="text-sm font-semibold text-brand underline">Termos</a>
                   <a href="/privacy" className="text-sm font-semibold text-brand underline">Privacidade</a>
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => registerConsent("ACCEPTED")} className="rounded-md bg-brand px-5 py-3.5 text-sm font-semibold text-white">ACEITAR E CONTINUAR</button>
+                <button type="button" onClick={() => registerConsent("ACCEPTED")} disabled={!storageConfigured} className="rounded-md bg-brand px-5 py-3.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">ACEITAR E CONTINUAR</button>
                 <button type="button" onClick={() => registerConsent("CANCELLED")} className="rounded-md border border-line bg-panel px-5 py-3.5 text-sm font-semibold text-ink">CANCELAR</button>
               </div>
-              {message && <p className="rounded-xl border border-rust/40 bg-rust/10 px-4 py-3 text-sm text-rust">{message}</p>}
+              {!storageConfigured && (
+                <p className="rounded-xl border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-amber">
+                  O armazenamento privado ainda não está conectado. O aceite e o upload estão bloqueados até o médico conectar o Blob da Vercel. Não envie documentos clínicos reais.
+                </p>
+              )}
+              {message && <p className={`rounded-xl border px-4 py-3 text-sm ${status === "sent" ? "border-success/40 bg-success/10 text-success-dark" : "border-rust/40 bg-rust/10 text-rust"}`}>{message}</p>}
             </div>
           )}
         </div>

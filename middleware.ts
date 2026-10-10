@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = [
+  /^\/risa-mark\.svg$/,
   /^\/api\/health$/,
   /^\/api\/auth\/login$/,
   /^\/api\/auth\/logout$/,
   /^\/login(?:\/|$)/,
   /^\/patient-upload(?:\/|$)/,
   /^\/api\/patient-upload$/,
+  /^\/api\/patient-upload\/blob$/,
   /^\/api\/consent$/,
   /^\/(?:terms|privacy)(?:\/|$)/,
 ];

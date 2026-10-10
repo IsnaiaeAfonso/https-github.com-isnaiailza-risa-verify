@@ -1,5 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { listPrivateBlobJson, readPrivateBlobJson, writePrivateBlobJson } from "@/lib/privateBlobJson";
+import { hasVercelBlobToken, isVercelRuntime } from "@/lib/patientUploadConfig";
 
 export type DocumentQueueStatus = "queued" | "stored" | "failed";
 
@@ -39,14 +41,21 @@ async function writeQueue(entries: DocumentQueueEntry[]): Promise<void> {
   await writeFile(queuePath, JSON.stringify(entries, null, 2), "utf8");
 }
 
-export async function addDocumentToQueue(entry: Omit<DocumentQueueEntry, "id" | "createdAt" | "updatedAt">): Promise<DocumentQueueEntry> {
+export async function addDocumentToQueue(entry: Omit<DocumentQueueEntry, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<DocumentQueueEntry> {
   const now = new Date().toISOString();
   const storedEntry: DocumentQueueEntry = {
     ...entry,
-    id: `${now.replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 12)}`,
+    id: entry.id ?? `${now.replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 12)}`,
     createdAt: now,
     updatedAt: now,
   };
+
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    await writePrivateBlobJson(`risa-verify/document-queue/${storedEntry.id}.json`, storedEntry);
+    return storedEntry;
+  }
+
   const queue = await readQueue();
   await writeQueue([storedEntry, ...queue]);
   return storedEntry;
@@ -56,6 +65,15 @@ export async function updateDocumentQueue(
   id: string,
   changes: Partial<Pick<DocumentQueueEntry, "status" | "storageProvider" | "objectKey" | "error">>,
 ): Promise<DocumentQueueEntry | undefined> {
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    const current = await getDocumentQueueItem(id);
+    if (!current) return undefined;
+    const updated = { ...current, ...changes, updatedAt: new Date().toISOString() };
+    await writePrivateBlobJson(`risa-verify/document-queue/${id}.json`, updated);
+    return updated;
+  }
+
   const queue = await readQueue();
   const index = queue.findIndex((entry) => entry.id === id);
   if (index < 0) return undefined;
@@ -70,10 +88,18 @@ export async function updateDocumentQueue(
 }
 
 export async function getDocumentQueue(): Promise<DocumentQueueEntry[]> {
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    return listPrivateBlobJson<DocumentQueueEntry>("risa-verify/document-queue/");
+  }
   return readQueue();
 }
 
 export async function getDocumentQueueItem(id: string): Promise<DocumentQueueEntry | undefined> {
+  if (isVercelRuntime()) {
+    if (!hasVercelBlobToken()) throw new Error("Vercel Blob privado não está configurado.");
+    return readPrivateBlobJson<DocumentQueueEntry>(`risa-verify/document-queue/${id}.json`);
+  }
   const queue = await readQueue();
   return queue.find((entry) => entry.id === id);
 }

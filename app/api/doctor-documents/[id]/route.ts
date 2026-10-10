@@ -1,4 +1,5 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { get as getBlob } from "@vercel/blob";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { NextResponse } from "next/server";
@@ -26,6 +27,10 @@ export async function GET(_request: Request, { params }: { params: { id: string 
       }));
       if (!response.Body) return NextResponse.json({ error: "Arquivo vazio." }, { status: 404 });
       pdf = await response.Body.transformToByteArray();
+    } else if (document.storageProvider === "vercel-blob-private") {
+      const response = await getBlob(document.objectKey, { access: "private", useCache: false });
+      if (!response || response.statusCode !== 200) return NextResponse.json({ error: "Arquivo não encontrado." }, { status: 404 });
+      pdf = new Uint8Array(await new Response(response.stream).arrayBuffer());
     } else if (document.storageProvider === "local-demo") {
       const uploadsRoot = resolve(process.cwd(), "data", "uploads", document.caseId.replace(/[^a-zA-Z0-9_-]/g, "_"));
       const filePath = resolve(process.cwd(), document.objectKey);

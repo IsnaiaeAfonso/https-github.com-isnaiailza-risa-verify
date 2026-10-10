@@ -11,9 +11,9 @@ const config: Config = {
         line: "#E1E4E1",
         muted: "#5B6A66",
         teal: {
-          DEFAULT: "#0E6F63",
-          dark: "#0A5148",
-          light: "#E4F1EE",
+          DEFAULT: "#18B9CF",
+          dark: "#087F9B",
+          light: "#E2F8FB",
         },
         amber: {
           DEFAULT: "#B4600A",
@@ -29,15 +29,15 @@ const config: Config = {
           light: "#E3F5EC",
         },
         navy: {
-          DEFAULT: "#0F2843",
-          dark: "#0A1B30",
-          mid: "#16324F",
-          light: "#1D3E60",
+          DEFAULT: "#0B1B31",
+          dark: "#071321",
+          mid: "#10243C",
+          light: "#193451",
         },
         brand: {
-          DEFAULT: "#2F63E5",
-          dark: "#234DBD",
-          light: "#EAF0FE",
+          DEFAULT: "#1686E8",
+          dark: "#0E5DB4",
+          light: "#E5F3FF",
         },
       },
       fontFamily: {

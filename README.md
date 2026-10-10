@@ -21,14 +21,14 @@ O primeiro build precisa de acesso à internet para baixar as fontes via `next/f
 - Upload de PDF pelo fluxo do paciente, com consentimento, validação do arquivo e seleção do médico.
 - Fila de documentos recebidos no portal médico, com acesso protegido por sessão.
 - Interface em português e inglês.
-- Armazenamento local para demonstração e suporte a S3 configurado no servidor.
+- Armazenamento local para desenvolvimento, suporte S3 no servidor e caminho de produção Vercel com Blob privado para PDFs, metadados da fila e consentimentos.
 - Hash e snapshot de integridade locais. A integração com Solana Attestation Service não está ativa; nenhuma transação Solana é enviada.
 
 ## Persistência e publicação
 
-Sem configuração de S3, PDFs e metadados são gravados no disco local em `data/`. A fila e os consentimentos usam arquivos JSON, enquanto parte dos casos fica no `localStorage` do navegador. Isso serve para desenvolvimento em uma única instância, mas não oferece persistência compartilhada adequada para funções serverless.
+Em desenvolvimento local, PDFs e metadados podem ser gravados em `data/` usando arquivos JSON. Na Vercel, PDFs, fila e consentimentos usam um Blob privado conectado ao projeto; crie esse store antes de habilitar uploads. Parte dos casos/revisões permanece no `localStorage` do navegador e ainda não é compartilhada entre médicos ou dispositivos.
 
-O projeto pode ser importado na Vercel para testar a interface e o build. Para persistir uploads na Vercel, é necessário migrar PDFs para armazenamento de objetos (por exemplo, S3 privado ou Vercel Blob), metadados para um banco compartilhado e usar upload direto do navegador para arquivos acima do limite da Function. Veja [DEPLOYMENT.md](DEPLOYMENT.md) e [PATIENT_UPLOAD.md](PATIENT_UPLOAD.md).
+O upload para Vercel Blob é direto do navegador porque a Vercel limita o corpo de uma Function a 4,5 MB; o limite de arquivo da experiência é 25 MB. A fila JSON é armazenada como objetos privados, não em um banco transacional, e é adequada apenas a esta demonstração de baixa escala. Veja [DEPLOYMENT.md](DEPLOYMENT.md) e [PATIENT_UPLOAD.md](PATIENT_UPLOAD.md).
 
 ## Configuração local
 
@@ -36,4 +36,4 @@ Copie `.env.example` para `.env.local` e preencha apenas as configurações que 
 
 ## Limites
 
-O armazenamento local e a fila JSON não devem ser usados como solução de produção multi-instância. Use apenas dados sintéticos até configurar armazenamento persistente, controles de acesso e os requisitos de privacidade aplicáveis. A verificação mostrada atualmente é local e não constitui atestação regulatória ou transação blockchain.
+O armazenamento local e a fila JSON em Blob não devem ser tratados como uma solução clínica de produção multiusuário. Use apenas dados sintéticos até configurar controles de acesso, auditoria, retenção, banco transacional e os requisitos de privacidade aplicáveis. O hash/registro de revisão é local neste deploy; a integração SAS ainda não emite atestações nem transações Solana.

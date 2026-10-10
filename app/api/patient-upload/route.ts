@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getConsent } from "@/lib/consentStore";
 import { addDocumentToQueue, updateDocumentQueue } from "@/lib/documentQueue";
+import { getPatientUploadDoctors, getPatientUploadMode, isPatientUploadStorageReady, isVercelRuntime } from "@/lib/patientUploadConfig";
 
 const AWS_REGION = process.env.AWS_REGION ?? "us-east-1";
 const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
@@ -14,25 +15,32 @@ const DEMO_CASE_ID = "CV-DEMO-00123";
 const TERMS_VERSION = "MVP-DEMO-2026-10";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function sha256(value: Buffer): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
 export function GET() {
-  const doctors = (process.env.PATIENT_UPLOAD_DOCTOR_NAMES ?? "")
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
-
+  const storageConfigured = isPatientUploadStorageReady();
   return NextResponse.json({
-    doctors,
+    doctors: getPatientUploadDoctors(),
+    uploadMode: getPatientUploadMode(),
+    storageConfigured,
     uploadToken: "patient-demo-link",
   });
 }
 
 export async function POST(request: Request) {
   try {
+    if (isVercelRuntime()) {
+      return NextResponse.json({
+        error: isPatientUploadStorageReady()
+          ? "Este deploy usa envio direto ao armazenamento. Atualize a página do paciente e tente novamente."
+          : "O armazenamento persistente ainda não está configurado neste deploy.",
+      }, { status: isPatientUploadStorageReady() ? 400 : 503 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const caseId = String(formData.get("caseId") ?? DEMO_CASE_ID).trim();
@@ -65,12 +73,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "O consentimento não corresponde ao caso ou termo atual." }, { status: 400 });
     }
 
-    const doctors = (process.env.PATIENT_UPLOAD_DOCTOR_NAMES ?? "")
-      .split(",")
-      .map((name) => name.trim())
-      .filter(Boolean);
+    const doctors = getPatientUploadDoctors();
     if (!doctorName || !doctors.includes(doctorName)) {
       return NextResponse.json({ error: "Selecione um médico válido para este envio." }, { status: 400 });
+    }
+    if (consent.doctorName !== doctorName) {
+      return NextResponse.json({ error: "O consentimento não corresponde ao médico selecionado." }, { status: 400 });
     }
 
     const digest = sha256(buffer);

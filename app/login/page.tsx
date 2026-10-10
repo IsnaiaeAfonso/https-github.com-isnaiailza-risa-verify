@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, FileSearch2, Fingerprint, Lock, Eye, EyeOff } from "lucide-react";
+import RisaLogo from "@/components/RisaLogo";
 
 const FEATURES = [
   { icon: FileSearch2, label: "Revisão estruturada com IA" },
@@ -48,12 +49,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex">
       <section className="hidden lg:flex lg:w-[42%] bg-navy-dark text-white flex-col justify-between px-12 py-14">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
-              <ShieldCheck size={16} className="text-white" />
-            </div>
-            <span className="text-lg font-semibold">RISA Verify</span>
-          </div>
+          <RisaLogo tone="light" />
           <p className="text-sm text-white/50">Portal médico</p>
 
           <h1 className="text-2xl font-semibold leading-snug mt-14 max-w-sm">
@@ -83,11 +79,8 @@ export default function LoginPage() {
 
       <section className="flex-1 flex items-center justify-center bg-paper px-6 py-16">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-md bg-brand flex items-center justify-center">
-              <ShieldCheck size={16} className="text-white" />
-            </div>
-            <span className="text-lg font-semibold text-ink">RISA Verify</span>
+          <div className="lg:hidden mb-8">
+            <RisaLogo tone="dark" />
           </div>
 
           <h2 className="text-xl font-semibold text-ink">Acesse sua conta</h2>

@@ -112,6 +112,37 @@ export default function DashboardPage() {
             <MetricCard icon={AlertTriangle} label="Pendentes" value={pending} tone="amber" />
           </div>
 
+          <section aria-labelledby="solana-attestation-heading" className="mb-8 overflow-hidden rounded-2xl border border-teal/30 bg-navy-dark text-white shadow-card">
+            <div className="grid gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center md:p-6">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal-light">
+                    <span className="h-2 w-2 rounded-full bg-teal" /> SOLANA · SAS
+                  </span>
+                  <span className="rounded-full border border-amber/40 bg-amber/10 px-3 py-1 text-xs font-medium text-[#ffd36a]">Não conectado neste deploy</span>
+                </div>
+                <h2 id="solana-attestation-heading" className="mt-3 text-xl font-semibold">Solana Attestation Service no fluxo RISA</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/70">
+                  Demonstração técnica do fluxo pretendido: a revisão atual calcula um hash local para integridade. Nenhuma atestação ou transação foi enviada à Solana; a publicação SAS ainda precisa de signer e configuração on-chain. Documentos clínicos não devem ser armazenados on-chain.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 md:min-w-64">
+                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                  <div className="text-xs text-white/55">Estado on-chain</div>
+                  <div className="mt-1 text-sm font-semibold">Não conectado</div>
+                </div>
+                  <a
+                  href="https://github.com/solana-foundation/solana-attestation-service"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-md border border-teal/50 px-4 py-2.5 text-sm font-medium text-teal-light hover:bg-teal/10"
+                >
+                  Ver projeto oficial do SAS
+                </a>
+              </div>
+            </div>
+          </section>
+
           <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr] mb-8">
             <div className="rounded-2xl border border-line bg-panel p-5 shadow-card">
               <div className="flex items-center justify-between mb-4">
@@ -324,25 +355,23 @@ export default function DashboardPage() {
 
                     <div className="space-y-3 text-sm text-muted">
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
-                        <span>Hash do resultado</span>
-                        <span className="font-mono text-ink">{selectedCase.attestation?.contentHash?.slice(0, 10) ?? "a3f9...7e2b"}</span>
+                        <span>Hash local (demo)</span>
+                        <span className="font-mono text-ink">{selectedCase.attestation?.contentHash?.slice(0, 10) ?? "Ainda não calculado"}</span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
                         <span>Registrado em</span>
-                        <span className="text-ink">{selectedCase.attestation?.completedAt ? formatDate(selectedCase.attestation.completedAt) : "14/12/2024 10:32"}</span>
+                        <span className="text-ink">{selectedCase.attestation?.completedAt ? formatDate(selectedCase.attestation.completedAt) : "Ainda não concluído"}</span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
                         <span>Integridade</span>
                         <span className="text-ink">Hash local</span>
                       </div>
-                      <div className="rounded-lg border border-brand/20 bg-brand-light/30 px-3 py-3">
+                      <div className="rounded-lg border border-line bg-panel px-3 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-medium text-ink">Solana Attestation Service (SAS)</span>
-                          <span className="rounded-full border border-amber/20 bg-amber-light px-2.5 py-1 text-xs font-medium text-amber">Integração planejada</span>
+                          <span className="font-medium text-ink">Próxima etapa: publicar a atestação SAS</span>
+                          <span className="text-xs font-medium text-muted">Não enviada</span>
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-muted">
-                          O registro atual é local. Nenhuma transação foi enviada à Solana.
-                        </p>
+                        <p className="mt-1 text-xs leading-5 text-muted">Este hash permanece local neste deploy. A emissão em rede exige configuração de signer e transação explícita.</p>
                       </div>
                     </div>
                   </div>
