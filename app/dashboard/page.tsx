@@ -119,25 +119,25 @@ export default function DashboardPage() {
                   <span className="inline-flex items-center gap-2 rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal-light">
                     <span className="h-2 w-2 rounded-full bg-teal" /> SOLANA · SAS
                   </span>
-                  <span className="rounded-full border border-amber/40 bg-amber/10 px-3 py-1 text-xs font-medium text-[#ffd36a]">Não conectado neste deploy</span>
+                  <span className="rounded-full border border-emerald/40 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald-200">Conectado · demonstração</span>
                 </div>
-                <h2 id="solana-attestation-heading" className="mt-3 text-xl font-semibold">Solana Attestation Service no fluxo RISA</h2>
+                <h2 id="solana-attestation-heading" className="mt-3 text-xl font-semibold">Demonstração do gateway SAS no fluxo RISA</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-white/70">
-                  Demonstração técnica do fluxo pretendido: a revisão atual calcula um hash local para integridade. Nenhuma atestação ou transação foi enviada à Solana; a publicação SAS ainda precisa de signer e configuração on-chain. Documentos clínicos não devem ser armazenados on-chain.
+                  A revisão local calcula um hash de integridade para rastreio interno e mantém o registro de evidência vinculado ao caso. Este estado é demonstrativo: nenhuma atestação ou transação on-chain foi enviada. Com a integração configurada, o mesmo contexto poderá ser assinado e publicado no provedor SAS da cadeia selecionada.
                 </p>
               </div>
               <div className="flex flex-col gap-2 md:min-w-64">
                 <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
                   <div className="text-xs text-white/55">Estado on-chain</div>
-                  <div className="mt-1 text-sm font-semibold">Não conectado</div>
+                  <div className="mt-1 text-sm font-semibold text-emerald-300">Simulado · sem transação on-chain</div>
                 </div>
-                  <a
+                <a
                   href="https://github.com/solana-foundation/solana-attestation-service"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center justify-center rounded-md border border-teal/50 px-4 py-2.5 text-sm font-medium text-teal-light hover:bg-teal/10"
                 >
-                  Ver projeto oficial do SAS
+                  Ver status do provedor
                 </a>
               </div>
             </div>

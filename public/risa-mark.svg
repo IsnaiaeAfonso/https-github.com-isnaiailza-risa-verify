@@ -1,11 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" fill="none">
   <defs>
-    <linearGradient id="risaBlue" x1="18" y1="12" x2="94" y2="108" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1686E8"/>
-      <stop offset=".56" stop-color="#18B9CF"/>
-      <stop offset="1" stop-color="#0E5DB4"/>
+    <linearGradient id="risaGradient" x1="20" y1="30" x2="200" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4CE7FF"/>
+      <stop offset="0.28" stop-color="#1AB8E6"/>
+      <stop offset="0.66" stop-color="#0D72D6"/>
+      <stop offset="1" stop-color="#0A2B7A"/>
     </linearGradient>
+    <linearGradient id="risaMid" x1="68" y1="36" x2="180" y2="170" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#72F2FF"/>
+      <stop offset="0.5" stop-color="#1AC5E1"/>
+      <stop offset="1" stop-color="#0C5FC2"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <path d="M99 12H51C25 12 10 28 10 51v17c0 10 4 18 11 24-7 6-11 14-11 24v2h31v-5c0-13 8-21 22-21h20c15 0 25-10 25-25V47c0-14-10-24-25-24H53c-6 0-10 3-10 8s4 8 10 8h42c5 0 8 3 8 8v19c0 6-3 9-10 9H63c-9 0-17 3-23 8-5-4-8-10-8-17V51c0-14 8-22 22-22h45V12Z" fill="url(#risaBlue)"/>
-  <path d="M12 70h29l11-13 13 29 15-44 12 28h17" stroke="#F7FEFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+
+  <g filter="url(#glow)">
+    <path d="M25 142C25 78 74 28 144 28C170 28 191 34 209 48L179 76C168 68 156 64 143 64C104 64 84 92 84 141V149C84 174 100 193 127 193H148C172 193 188 181 188 159C188 137 176 124 152 124H92C81 124 73 120 66 113L50 132C65 149 85 159 107 159H148C183 159 205 141 205 108C205 74 182 55 145 55H111C89 55 71 65 58 83L25 142Z" fill="url(#risaGradient)"/>
+    <path d="M50 76C71 53 101 42 133 42C163 42 188 52 201 76C163 78 139 94 118 121L91 121C83 102 68 87 50 76Z" fill="url(#risaMid)" opacity="0.9"/>
+    <path d="M79 77L115 77C133 77 148 82 160 95C171 108 175 122 169 137C162 153 148 163 127 166C110 168 95 166 82 161L82 126H104C116 126 123 124 128 117C133 110 131 103 123 98C116 92 107 90 96 90H79V77Z" fill="#0D3E90" opacity="0.55"/>
+  </g>
+
+  <path d="M103 58H144C168 58 183 74 183 94C183 112 170 126 151 130L181 173H150L122 133H103V173H80V58H103ZM103 92V110H141C148 110 153 105 153 100C153 94 148 92 141 92H103Z" fill="white" opacity="0.98"/>
+  <path d="M70 96H104M108 96H132M72 115H104M108 115H146" stroke="#F3FDFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
 </svg>
