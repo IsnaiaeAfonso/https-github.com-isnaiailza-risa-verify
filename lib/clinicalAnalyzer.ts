@@ -169,6 +169,21 @@ export function analyzeClinicalDocuments(documents: ClinicalDocument[]): Clinica
       const pageNumber = pageIndex + 1;
       labResults.push(...extractLabResults(document, pageNumber, pageText));
 
+      const reportLines = pageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+      for (let lineIndex = 0; lineIndex < reportLines.length; lineIndex += 1) {
+        const match = reportLines[lineIndex].match(/^(achados?|conclus[aã]o|impress[aã]o diagn[oó]stica|resultado(?: do exame)?|descri[cç][aã]o)\s*[:\-]?\s*(.*)$/i);
+        if (!match) continue;
+        const nextLine = reportLines[lineIndex + 1] ?? "";
+        const nextLineIsHeading = /^(achados?|conclus[aã]o|impress[aã]o diagn[oó]stica|resultado(?: do exame)?|descri[cç][aã]o)\b/i.test(nextLine);
+        const content = match[2] || (nextLineIsHeading ? "" : nextLine);
+        if (content.length < 8) continue;
+        const sectionLabel = match[1].trim();
+        const heading = /achado/i.test(sectionLabel)
+          ? "Achados registrados no laudo"
+          : `${sectionLabel.charAt(0).toLocaleUpperCase("pt-BR")}${sectionLabel.slice(1)} no laudo`;
+        addFinding(document, pageNumber, heading, "Achado do laudo", `${match[1]}: ${content.slice(0, 500)}`);
+      }
+
       const creatininePattern = /\bcreatinina(?:\s+s[eé]rica)?\s*[:=\-]?\s*(\d+(?:[,.]\d+)?)\s*(mg\s*\/\s*dL)?/gi;
       for (const match of pageText.matchAll(creatininePattern)) {
         const rawValue = match[1];
