@@ -91,6 +91,11 @@ export default function ReviewPage() {
     { key: "estruturada", label: "Revisão estruturada" },
     ...(preferences.showRisaSection ? [{ key: "risa" as const, label: "RISA — Escuta Clínica" }] : []),
   ];
+  const documentsWithoutText = clinicalCase.documents.filter(
+    (document) =>
+      document.extractionStatus === "no_text" ||
+      document.extractionStatus === "unreadable",
+  );
 
   return (
     <AppShell>
@@ -100,6 +105,24 @@ export default function ReviewPage() {
           subtitle={`${clinicalCase.documents.length} ${clinicalCase.documents.length === 1 ? "documento" : "documentos"} · análise concluída`}
           action={{ label: "Revisar achados →", href: `/cases/${clinicalCase.id}/professional-review` }}
         />
+
+        {documentsWithoutText.length > 0 && (
+          <div role="alert" className="mx-auto mt-5 w-full max-w-5xl rounded-md border border-rust/30 bg-rust/5 px-4 py-3 text-sm text-rust">
+            <p className="font-medium">Alguns PDFs não forneceram texto para análise.</p>
+            <p className="mt-1">
+              PDFs digitalizados como imagem precisam de OCR. Os demais documentos com texto foram analisados normalmente.
+            </p>
+            <ul className="mt-2 list-disc pl-5">
+              {documentsWithoutText.map((document) => (
+                <li key={document.id}>
+                  {document.name}: {document.extractionStatus === "no_text"
+                    ? "sem texto selecionável"
+                    : document.processingError || "não foi possível ler o arquivo"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {isAnalyzing ? (
           <div className="max-w-5xl mx-auto w-full px-6 py-16 text-sm text-muted text-center">
