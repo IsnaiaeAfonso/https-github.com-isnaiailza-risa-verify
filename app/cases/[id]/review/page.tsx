@@ -16,7 +16,7 @@ import { DEMO_CASE_ID, labTrend } from "@/lib/mockData";
 import { ClinicalCase, Conflict, EvidenceRef, Finding } from "@/lib/types";
 import { AlertTriangle, UserCheck, ShieldCheck, FileText, ExternalLink } from "lucide-react";
 
-type Tab = "geral" | "timeline" | "conflitos" | "lacunas" | "estruturada" | "risa";
+type Tab = "geral" | "exames" | "timeline" | "conflitos" | "lacunas" | "estruturada" | "risa";
 
 function formatDate(iso: string) {
   if (!iso) return "Data não informada";
@@ -78,6 +78,7 @@ export default function ReviewPage() {
   }
 
   const isAnalyzing = clinicalCase.status === "em_analise";
+  const labResults = clinicalCase.labResults ?? [];
   const jevItems = jevItemsFor(clinicalCase.id);
   const trend = clinicalCase.id === DEMO_CASE_ID ? labTrend : trendForCase(clinicalCase);
   const requiredCount = jevItems.filter((i) => i.humanReviewRequired).length;
@@ -85,6 +86,7 @@ export default function ReviewPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: "geral", label: "Visão geral" },
+    { key: "exames", label: `Exames (${labResults.length})` },
     ...(preferences.showTimeline ? [{ key: "timeline" as const, label: "Linha do tempo" }] : []),
     { key: "conflitos", label: `Conflitos (${clinicalCase.conflicts.length})` },
     { key: "lacunas", label: `Lacunas (${clinicalCase.gaps.length})` },
@@ -165,6 +167,55 @@ export default function ReviewPage() {
                 </button>
               ))}
             </div>
+
+            {tab === "exames" && (
+              <div className="space-y-5">
+                <div className="rounded-md border border-brand/20 bg-brand-light/30 px-4 py-3 text-sm text-muted">
+                  Resultados transcritos automaticamente do texto dos PDFs. As sinalizações refletem somente a referência ou marcação impressa no documento; confirme no laudo original.
+                </div>
+
+                {labResults.some((result) => result.status === "fora_da_referencia" || result.status === "sinalizado_no_laudo") && (
+                  <section aria-labelledby="lab-attention-title">
+                    <h3 id="lab-attention-title" className="mb-3 text-sm font-semibold text-ink">Pontos sinalizados nos laudos</h3>
+                    <div className="space-y-2">
+                      {labResults.filter((result) => result.status === "fora_da_referencia" || result.status === "sinalizado_no_laudo").map((result) => (
+                        <div key={result.id} className="rounded-md border border-amber/30 bg-amber-light/40 px-4 py-3">
+                          <p className="text-sm font-medium text-ink">{result.testName}: {result.result}{result.unit ? ` ${result.unit}` : ""}</p>
+                          <p className="mt-1 text-xs text-muted">{result.status === "fora_da_referencia" ? "Valor fora da faixa de referência impressa" : "Marcado como alterado no laudo"}{result.referenceRange ? ` · Referência: ${result.referenceRange}` : ""}</p>
+                          <p className="mt-1 text-xs text-muted">{result.evidence.docName} · página {result.evidence.page}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {labResults.length > 0 ? (
+                  <div className="overflow-hidden rounded-md border border-line bg-panel">
+                    <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(6rem,.8fr)_minmax(7rem,.8fr)_minmax(9rem,1fr)] gap-3 border-b border-line bg-paper px-4 py-3 text-xs font-semibold text-muted max-md:hidden">
+                      <span>Exame</span><span>Resultado</span><span>Referência no laudo</span><span>Documento / estado</span>
+                    </div>
+                    <div className="divide-y divide-line">
+                      {labResults.map((result) => (
+                        <article key={result.id} className="grid grid-cols-[minmax(0,1.2fr)_minmax(6rem,.8fr)_minmax(7rem,.8fr)_minmax(9rem,1fr)] gap-3 px-4 py-3 text-sm max-md:grid-cols-1">
+                          <div><p className="font-medium text-ink">{result.testName}</p><p className="mt-1 text-xs text-muted md:hidden">Exame</p></div>
+                          <div><p className="text-ink">{result.result}{result.unit ? ` ${result.unit}` : ""}</p><p className="mt-1 text-xs text-muted md:hidden">Resultado</p></div>
+                          <div><p className="text-ink">{result.referenceRange ?? "Não identificada no trecho"}</p><p className="mt-1 text-xs text-muted md:hidden">Referência</p></div>
+                          <div>
+                            <p className="break-words text-ink">{result.evidence.docName}</p>
+                            <p className={`mt-1 text-xs ${result.status === "fora_da_referencia" || result.status === "sinalizado_no_laudo" ? "font-medium text-amber" : "text-muted"}`}>
+                              {result.status === "fora_da_referencia" ? "Fora da referência impressa" : result.status === "sinalizado_no_laudo" ? "Sinalizado no laudo" : result.status === "dentro_da_referencia" ? "Dentro da referência impressa" : "Sem referência identificada"} · página {result.evidence.page}
+                            </p>
+                            <blockquote className="mt-2 border-l-2 border-line pl-2 text-xs leading-relaxed text-muted">{result.evidence.excerpt}</blockquote>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">Nenhum resultado laboratorial estruturável foi identificado no texto extraído. Confira se o PDF contém texto selecionável; documentos digitalizados como imagem precisam de OCR.</p>
+                )}
+              </div>
+            )}
 
             {tab === "geral" && (
               <div className="space-y-3">
