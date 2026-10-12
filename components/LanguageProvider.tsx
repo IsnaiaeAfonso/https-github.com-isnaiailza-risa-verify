@@ -504,6 +504,9 @@ function translatedText(value: string, language: Language) {
     const patientCaseMessage = trimmed.match(/^Caso:\s*([A-Za-z0-9_-]+)\.\s*Envie o PDF ao médico selecionado\.$/i);
     if (patientCaseMessage) return `Case: ${patientCaseMessage[1]}. Send the PDF to the selected physician.`;
 
+    const consentCaseMessage = trimmed.match(/^O consentimento é específico para o caso\s+([A-Za-z0-9_-]+)\.$/i);
+    if (consentCaseMessage) return `Consent applies specifically to case ${consentCaseMessage[1]}.`;
+
     const completedDocumentSummary = trimmed.match(/^(\d+)\s+documentos\s*·\s*análise concluída$/i);
     if (completedDocumentSummary) return `${completedDocumentSummary[1]} documents · analysis complete`;
 
