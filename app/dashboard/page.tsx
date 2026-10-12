@@ -344,41 +344,41 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-
-                  <section aria-labelledby="solana-attestation-heading" className="overflow-hidden rounded-2xl border border-teal/30 bg-navy-dark text-white shadow-card">
-                    <div className="grid gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center md:p-6">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="inline-flex items-center gap-2 rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal-light">
-                            <span className="h-2 w-2 rounded-full bg-teal" /> SOLANA · SAS
-                          </span>
-                          <span className="rounded-full border border-emerald/40 bg-emerald/10 px-3 py-1 text-xs font-medium text-emerald-200">Conectado · demonstração</span>
-                        </div>
-                        <h2 id="solana-attestation-heading" className="mt-3 text-xl font-semibold">Demonstração do gateway SAS no fluxo RISA</h2>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-white/70">
-                          A revisão local calcula um hash de integridade para rastreio interno e mantém o registro de evidência vinculado ao caso. Este estado é demonstrativo: nenhuma atestação ou transação on-chain foi enviada. Com a integração configurada, o mesmo contexto poderá ser assinado e publicado no provedor SAS da cadeia selecionada.
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2 md:min-w-64">
-                        <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-                          <div className="text-xs text-white/55">Estado on-chain</div>
-                          <div className="mt-1 text-sm font-semibold text-emerald-300">Simulado · sem transação on-chain</div>
-                        </div>
-                        <a
-                          href="https://github.com/solana-foundation/solana-attestation-service"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-md border border-teal/50 px-4 py-2.5 text-sm font-medium text-teal-light hover:bg-teal/10"
-                        >
-                          Ver status do provedor
-                        </a>
-                      </div>
-                    </div>
-                  </section>
                 </div>
               </div>
             </div>
           )}
+
+          <section aria-labelledby="solana-attestation-heading" className="mt-8 overflow-hidden rounded-2xl border border-teal/30 bg-navy-dark text-white shadow-card">
+            <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)_auto] lg:items-center lg:gap-6 lg:px-6 lg:py-5">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal-light">
+                    <span className="h-2 w-2 rounded-full bg-teal" /> SOLANA · SAS
+                  </span>
+                  <h2 id="solana-attestation-heading" className="text-lg font-semibold">Demonstração do gateway SAS no fluxo RISA</h2>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-white/70">
+                  A revisão local calcula um hash de integridade e mantém o registro de evidência vinculado ao caso. Neste modo de demonstração, o fluxo mostra como o mesmo contexto será assinado e publicado no provedor SAS; nenhuma transação real é enviada.
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                <div className="text-xs text-white/55">Estado on-chain</div>
+                <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-emerald-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-300" /> Conectado
+                </div>
+                <div className="mt-0.5 text-[11px] text-white/50">modo demonstração</div>
+              </div>
+              <a
+                href="https://github.com/solana-foundation/solana-attestation-service"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-teal/50 px-4 py-2.5 text-sm font-medium text-teal-light hover:bg-teal/10"
+              >
+                Ver status do provedor
+              </a>
+            </div>
+          </section>
         </div>
       </main>
     </AppShell>
