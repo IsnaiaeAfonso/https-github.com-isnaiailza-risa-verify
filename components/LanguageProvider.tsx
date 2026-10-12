@@ -6,6 +6,12 @@ export type Language = "pt" | "en";
 
 const LANGUAGE_KEY = "risa-interface-language";
 const translations: Record<string, string> = {
+  "Portal médico": "Medical portal",
+  "Revisão estruturada com IA": "Structured AI-assisted review",
+  "Evidências rastreáveis": "Traceable evidence",
+  "Integridade e attestation": "Integrity and attestation",
+  "Inteligência, integridade e confiança na revisão de documentos clínicos.": "Intelligence, integrity, and trust in clinical document review.",
+  "Ambiente de demonstração — use somente dados sintéticos. A ferramenta não realiza diagnóstico, prescrição ou recomendação médica.": "Demonstration environment — use synthetic data only. This tool does not provide diagnoses, prescriptions, or medical recommendations.",
   "Painel médico": "Medical dashboard",
   "Meus casos": "My cases",
   "Resumo documental": "Document summary",
@@ -146,6 +152,8 @@ const translations: Record<string, string> = {
   "Revisão profissional registrada": "Professional review recorded",
   "Registro da revisão calculado neste navegador": "Review record calculated in this browser",
   "Nenhuma transação Solana foi enviada": "No Solana transaction was sent",
+  "Conexão ativa · modo demonstração": "Connection active · demo mode",
+  "A conexão com Solana é simulada para demonstrar o fluxo previsto do MVP. Nenhuma assinatura, atestação SAS ou transação foi criada; o hash permanece local. PDFs e dados clínicos não são enviados à blockchain.": "The Solana connection is simulated to demonstrate the MVP's planned workflow. No signature, SAS attestation, or transaction was created; the hash remains local. PDFs and clinical data are not sent to the blockchain.",
   "Integridade e rastreabilidade": "Integrity and traceability",
   "Atestação local": "Local attestation",
   "Hash do resultado": "Result hash",
