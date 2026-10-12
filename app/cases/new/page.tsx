@@ -21,10 +21,17 @@ export default function NewCasePage() {
 
   const [label, setLabel] = useState("");
   const [files, setFiles] = useState<
-    { file: File; name: string; sizeLabel: string }[]
+    {
+      file: File;
+      name: string;
+      sizeLabel: string;
+      extractionStatus?: "reading" | "text_extracted" | "no_text" | "unreadable";
+      processingError?: string;
+    }[]
   >([]);
   const [dragOver, setDragOver] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState("");
 
   function handleFiles(fileList: FileList | null) {
     if (!fileList) return;
@@ -42,26 +49,19 @@ export default function NewCasePage() {
 
   async function handleAnalyze() {
     setCreating(true);
-    const newCase = createCase(label.trim());
+    setFormError("");
+    setFiles((current) =>
+      current.map((file) => ({ ...file, extractionStatus: "reading", processingError: undefined })),
+    );
+
     const preparedFiles = await Promise.all(
       files.map(async ({ file, name, sizeLabel }) => {
+        let extractedPages: string[];
+        let pageCount: number;
         try {
-          const storageResult = await uploadDocument(file, newCase.id);
           const extraction = await extractPdfText(file);
-          const extractedPages = extraction.pages;
-          return {
-            name,
-            sizeLabel,
-            pages: extraction.pageCount,
-            extractedPages,
-            extractionStatus: extractedPages.some((page) => page.trim())
-              ? ("text_extracted" as const)
-              : ("no_text" as const),
-            objectKey: storageResult.objectKey,
-            storageProvider: storageResult.storageProvider,
-            encryptionStatus: storageResult.encryptionStatus,
-            sha256: storageResult.sha256,
-          };
+          extractedPages = extraction.pages;
+          pageCount = extraction.pageCount;
         } catch (error) {
           const message =
             error instanceof Error
@@ -73,16 +73,59 @@ export default function NewCasePage() {
             pages: 0,
             extractedPages: [],
             extractionStatus: "unreadable" as const,
-            storageProvider: "local-demo" as const,
-            encryptionStatus: "local-demo" as const,
-            sha256: undefined,
             processingError: message,
           };
+        }
+
+        const extractionStatus = extractedPages.some((page) => page.trim())
+          ? ("text_extracted" as const)
+          : ("no_text" as const);
+
+        return {
+          name,
+          sizeLabel,
+          pages: pageCount,
+          extractedPages,
+          extractionStatus,
+        };
+      }),
+    );
+
+    setFiles((current) =>
+      current.map((file, index) => ({
+        ...file,
+        extractionStatus: preparedFiles[index].extractionStatus,
+        processingError: preparedFiles[index].processingError,
+      })),
+    );
+
+    if (!preparedFiles.some((file) => file.extractionStatus === "text_extracted")) {
+      setFormError(
+        "Nenhum texto foi extraído. PDFs digitalizados como imagem precisam de OCR; confira se os arquivos abrem e tente PDFs com texto selecionável.",
+      );
+      setCreating(false);
+      return;
+    }
+
+    const newCase = createCase(label.trim());
+    const filesWithStorage = await Promise.all(
+      preparedFiles.map(async (preparedFile, index) => {
+        try {
+          const storageResult = await uploadDocument(files[index].file, newCase.id);
+          return {
+            ...preparedFile,
+            objectKey: storageResult.objectKey,
+            storageProvider: storageResult.storageProvider,
+            encryptionStatus: storageResult.encryptionStatus,
+            sha256: storageResult.sha256,
+          };
+        } catch {
+          return preparedFile;
         }
       }),
     );
 
-    if (preparedFiles.length > 0) addDocuments(newCase.id, preparedFiles);
+    addDocuments(newCase.id, filesWithStorage);
     runAnalysis(newCase.id);
     router.push(`/cases/${newCase.id}/analyzing`);
   }
@@ -95,6 +138,12 @@ export default function NewCasePage() {
           <p className="text-sm text-muted mb-6">
             Adicione os documentos clínicos para análise.
           </p>
+
+          {formError && (
+            <p role="alert" className="mb-5 rounded-md border border-rust/30 bg-rust/5 px-4 py-3 text-sm text-rust">
+              {formError}
+            </p>
+          )}
 
           <div className="mb-6">
             <label
@@ -162,7 +211,15 @@ export default function NewCasePage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-ink truncate">{doc.name}</p>
                     <p className="text-xs text-muted">
-                      {doc.sizeLabel} · aguardando envio
+                      {doc.sizeLabel} · {doc.extractionStatus === "reading"
+                        ? "lendo PDF..."
+                        : doc.extractionStatus === "text_extracted"
+                          ? "texto extraído"
+                          : doc.extractionStatus === "no_text"
+                            ? "sem texto extraível; pode ser PDF digitalizado"
+                            : doc.extractionStatus === "unreadable"
+                              ? doc.processingError || "não foi possível ler o PDF"
+                              : "aguardando leitura"}
                     </p>
                   </div>
                   <button
