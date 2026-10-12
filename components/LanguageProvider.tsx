@@ -551,8 +551,12 @@ function translatedText(value: string, language: Language) {
     const completedDocumentSummary = trimmed.match(/^(\d+)\s+documentos\s*·\s*análise concluída$/i);
     if (completedDocumentSummary) return `${completedDocumentSummary[1]} documents · analysis complete`;
 
-    const countedTab = trimmed.match(/^(Conflitos|Lacunas)\s*\(\s*(\d+)\s*\)$/i);
-    if (countedTab) return `${countedTab[1].toLowerCase() === "conflitos" ? "Conflicts" : "Gaps"} (${countedTab[2]})`;
+    const countedTab = trimmed.match(/^(Conflitos|Lacunas|Exames)\s*\(\s*(\d+)\s*\)$/i);
+    if (countedTab) {
+      const noun = countedTab[1].toLowerCase();
+      const translatedNoun = noun === "conflitos" ? "Conflicts" : noun === "lacunas" ? "Gaps" : "Tests";
+      return `${translatedNoun} (${countedTab[2]})`;
+    }
 
     const countLabel = trimmed.match(/^(\d+)\s+(documentos?|registros?|achados?|conflitos?|revisões?)$/i);
     if (countLabel) {
