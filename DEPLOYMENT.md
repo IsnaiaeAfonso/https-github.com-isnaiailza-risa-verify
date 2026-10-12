@@ -2,6 +2,10 @@
 
 This deployment runs one persistent Next.js instance behind Caddy HTTPS. It is intended for a private demonstration, not production handling of real patient data. The physician portal uses HTTP Basic Authentication; patient upload and consent pages remain public by design.
 
+## Vercel patient uploads
+
+Patient uploads on Vercel require a private Blob store. In the Vercel project, create a Blob store with private access, connect it to the project, and add the read-write token as `BLOB_READ_WRITE_TOKEN` for Production. Redeploy after connecting the store so the server runtime receives the token. The patient upload API should then report `uploadMode: "vercel-blob"` and `storageConfigured: true`. Review current Blob usage limits and billing before accepting uploads. Use synthetic documents only in this demonstration.
+
 ## Do zero ao deploy
 
 ### Sem comprar domínio
