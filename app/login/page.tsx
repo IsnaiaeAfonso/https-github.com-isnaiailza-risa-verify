@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, FileSearch2, Fingerprint, Lock, Eye, EyeOff } from "lucide-react";
 import RisaLogo from "@/components/RisaLogo";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const FEATURES = [
   { icon: FileSearch2, label: "Revisão estruturada com IA" },
@@ -14,6 +15,7 @@ const FEATURES = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const { language, setLanguage } = useLanguage();
   const [username, setUsername] = useState("risa");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +79,27 @@ export default function LoginPage() {
         </p>
       </section>
 
-      <section className="flex-1 flex items-center justify-center bg-paper px-6 py-16">
+      <section className="relative flex-1 flex items-center justify-center bg-paper px-6 py-16">
+        <div role="group" aria-label="Idioma / Language" className="absolute right-6 top-6 inline-flex rounded-md border border-line bg-panel p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setLanguage("pt")}
+            aria-pressed={language === "pt"}
+            aria-label="Português"
+            className={`rounded px-2 py-1 font-medium transition-colors ${language === "pt" ? "bg-brand text-white" : "text-muted hover:text-ink"}`}
+          >
+            PT
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            aria-pressed={language === "en"}
+            aria-label="English"
+            className={`rounded px-2 py-1 font-medium transition-colors ${language === "en" ? "bg-brand text-white" : "text-muted hover:text-ink"}`}
+          >
+            EN
+          </button>
+        </div>
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8">
             <RisaLogo tone="dark" />
