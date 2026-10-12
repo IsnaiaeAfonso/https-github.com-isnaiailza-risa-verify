@@ -10,7 +10,7 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 const STAGES = [
   "Verificando os PDFs anexados",
-  "Extraindo texto selecionável",
+  "Extraindo texto do PDF e aplicando OCR quando necessário",
   "Identificando evidências conhecidas",
   "Comparando informações entre documentos",
   "Preparando revisão humana",
