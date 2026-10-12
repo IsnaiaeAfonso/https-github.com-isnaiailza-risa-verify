@@ -105,19 +105,6 @@ export default function AttestationPage() {
               <CopyField label="Hash do snapshot local" value={attestation.contentHash} />
             </div>
 
-            <section className="mt-6 rounded-xl border border-teal/30 bg-navy-dark p-4 text-left text-white">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-teal-light">Solana · Attestation Service (SAS)</h3>
-                <span className="rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-xs font-medium text-amber-light">Não conectado neste deploy</span>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-white/70">
-                O hash acima foi calculado localmente. Nenhuma assinatura, atestação SAS ou transação Solana foi criada. O PDF e dados clínicos não devem ser publicados on-chain.
-              </p>
-              <a href="https://github.com/solana-foundation/solana-attestation-service" target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-medium text-teal-light underline underline-offset-2">
-                Documentação oficial do SAS
-              </a>
-            </section>
-
             <p className="text-xs text-muted mt-4">
               {attestation.reviewer} · concluída em {formatDateTime(attestation.completedAt)}
             </p>
@@ -138,6 +125,19 @@ export default function AttestationPage() {
           <p className="text-xs text-muted mt-6 leading-relaxed text-center">
             Este hash foi calculado neste navegador a partir do registro da revisão. Ele não foi publicado nem confirmado na Solana; a revisão e os documentos permanecem neste navegador.
           </p>
+
+          <section className="mt-6 rounded-xl border border-teal/30 bg-navy-dark p-4 text-left text-white">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-teal-light">Solana · Attestation Service (SAS)</h3>
+              <span className="rounded-full border border-success/40 bg-success/10 px-2.5 py-1 text-xs font-medium text-success-light">Conexão ativa · modo demonstração</span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-white/70">
+              A conexão com Solana é simulada para demonstrar o fluxo previsto do MVP. Nenhuma assinatura, atestação SAS ou transação foi criada; o hash permanece local. PDFs e dados clínicos não são enviados à blockchain.
+            </p>
+            <a href="https://github.com/solana-foundation/solana-attestation-service" target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-medium text-teal-light underline underline-offset-2">
+              Documentação oficial do SAS
+            </a>
+          </section>
         </div>
       </main>
     </AppShell>
