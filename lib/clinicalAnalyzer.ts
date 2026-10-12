@@ -44,16 +44,42 @@ function numericValue(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+interface LabReferenceRange {
+  label: string;
+  lower: number | null;
+  upper: number | null;
+  lowerInclusive: boolean;
+  upperInclusive: boolean;
+}
+
 const LAB_TEST_PATTERN = /\b(hemoglobina\s+glicada|hemoglobina\s+glicosilada|hba1c|hemoglobina|hemat[oó]crito|leuc[oó]citos|neutr[oó]filos|linf[oó]citos|plaquetas|glicose|glicemia|creatinina|ureia|s[oó]dio|pot[aá]ssio|cloro|c[aá]lcio|magn[eé]sio|tgo|ast|tgp|alt|gama\s+glutamil\s+transferase|ggt|fosfatase\s+alcalina|bilirrubina\s+total|colesterol\s+total|hdl|ldl|triglicer[ií]deos|tsh|t4\s+livre|prote[ií]na\s+c\s+reativa|pcr|ferritina|ferro\s+s[eé]rico|vitamina\s+d|vitamina\s+b12|inr|tap|albumina)\b/gi;
 
 function labReferenceRange(text: string) {
-  const match = text.match(/(?:\b(?:VR|refer[eê]ncia|ref\.?)\s*:?\s*)?([<>≤≥]?\s*\d+(?:[.,]\d+)?)\s*(?:-|–|—|\ba\b|\bat[eé]\b|\bto\b)\s*([<>≤≥]?\s*\d+(?:[.,]\d+)?)/i);
-  if (!match) return null;
+  const prefix = /(?:\b(?:VR|refer[eê]ncia|ref\.?)\s*:?\s*)?/i;
+  const range = text.match(new RegExp(`${prefix.source}([<>≤≥]?\\s*\\d+(?:[.,]\\d+)?)\\s*(?:-|–|—|\\ba\\b|\\bat[eé]\\b|\\bto\\b)\\s*([<>≤≥]?\\s*\\d+(?:[.,]\\d+)?)`, "i"));
+  if (range) {
+    return {
+      label: `${range[1].trim()} - ${range[2].trim()}`,
+      lower: numericValue(range[1].replace(/[<>≤≥]/g, "")),
+      upper: numericValue(range[2].replace(/[<>≤≥]/g, "")),
+      lowerInclusive: true,
+      upperInclusive: true,
+    } satisfies LabReferenceRange;
+  }
+
+  const singleLimit = text.match(new RegExp(`${prefix.source}([<>≤≥])\\s*(\\d+(?:[.,]\\d+)?)`, "i"));
+  if (!singleLimit) return null;
+  const limit = numericValue(singleLimit[2]);
+  if (limit === null) return null;
+  const operator = singleLimit[1];
+  const lowerBound = operator === ">" || operator === "≥";
   return {
-    label: `${match[1].trim()} - ${match[2].trim()}`,
-    lower: numericValue(match[1].replace(/[<>≤≥]/g, "")),
-    upper: numericValue(match[2].replace(/[<>≤≥]/g, "")),
-  };
+    label: `${operator}${singleLimit[2]}`,
+    lower: lowerBound ? limit : null,
+    upper: lowerBound ? null : limit,
+    lowerInclusive: operator === "≥",
+    upperInclusive: operator === "≤",
+  } satisfies LabReferenceRange;
 }
 
 function extractLabResults(document: ClinicalDocument, page: number, text: string): LabResult[] {
@@ -76,8 +102,9 @@ function extractLabResults(document: ClinicalDocument, page: number, text: strin
       const trailingText = unit ? remainder.slice(unit.length).trim() : remainder;
       const reference = labReferenceRange(trailingText);
       const numericResult = /^[<>≤≥]/.test(value) ? null : numericValue(value);
-      const outsideReference = numericResult !== null && reference !== null && reference.lower !== null && reference.upper !== null
-        ? numericResult < reference.lower || numericResult > reference.upper
+      const outsideReference = numericResult !== null && reference !== null
+        ? (reference.lower !== null && (reference.lowerInclusive ? numericResult < reference.lower : numericResult <= reference.lower))
+          || (reference.upper !== null && (reference.upperInclusive ? numericResult > reference.upper : numericResult >= reference.upper))
         : false;
       const explicitlyFlagged = /(?:\b(?:alto|alta|baixo|baixa|alterado|alterada|high|low|abnormal)\b|(?:^|\s)[HL]\s*$|[↑↓]|\*)/i.test(trailingText);
       const status: LabResult["status"] = outsideReference
@@ -171,12 +198,16 @@ export function analyzeClinicalDocuments(documents: ClinicalDocument[]): Clinica
 
       const reportLines = pageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
       for (let lineIndex = 0; lineIndex < reportLines.length; lineIndex += 1) {
-        const match = reportLines[lineIndex].match(/^(achados?|conclus[aã]o|impress[aã]o diagn[oó]stica|resultado(?: do exame)?|descri[cç][aã]o)\s*[:\-]?\s*(.*)$/i);
+        const match = reportLines[lineIndex].match(/^(achados?|conclus[aã]o|impress[aã]o diagn[oó]stica|resultados?(?: do exame)?|descri[cç][aã]o)\s*[:\-]?\s*(.*)$/i);
         if (!match) continue;
         const nextLine = reportLines[lineIndex + 1] ?? "";
         const nextLineIsHeading = /^(achados?|conclus[aã]o|impress[aã]o diagn[oó]stica|resultado(?: do exame)?|descri[cç][aã]o)\b/i.test(nextLine);
         const content = match[2] || (nextLineIsHeading ? "" : nextLine);
         if (content.length < 8) continue;
+        const sectionText = `${match[1]} ${content}`
+          .replace(/resultado\s+s(?=\s+apresentados)/i, "resultados")
+          .replace(/^s\s+apresentados/i, "Resultados apresentados");
+        if (/resultados?\s+apresentados conforme valores de referência informados pelo laboratório/i.test(sectionText)) continue;
         const sectionLabel = match[1].trim();
         const heading = /achado/i.test(sectionLabel)
           ? "Achados registrados no laudo"
