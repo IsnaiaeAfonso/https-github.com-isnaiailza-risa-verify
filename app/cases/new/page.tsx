@@ -26,6 +26,7 @@ export default function NewCasePage() {
       name: string;
       sizeLabel: string;
       extractionStatus?: "reading" | "text_extracted" | "no_text" | "unreadable";
+      ocrPages?: number;
       processingError?: string;
     }[]
   >([]);
@@ -58,10 +59,12 @@ export default function NewCasePage() {
       files.map(async ({ file, name, sizeLabel }) => {
         let extractedPages: string[];
         let pageCount: number;
+        let ocrPages = 0;
         try {
           const extraction = await extractPdfText(file);
           extractedPages = extraction.pages;
           pageCount = extraction.pageCount;
+          ocrPages = extraction.ocrPages;
         } catch (error) {
           const message =
             error instanceof Error
@@ -73,6 +76,7 @@ export default function NewCasePage() {
             pages: 0,
             extractedPages: [],
             extractionStatus: "unreadable" as const,
+            ocrPages: 0,
             processingError: message,
           };
         }
@@ -87,6 +91,7 @@ export default function NewCasePage() {
           pages: pageCount,
           extractedPages,
           extractionStatus,
+          ocrPages,
         };
       }),
     );
@@ -95,6 +100,7 @@ export default function NewCasePage() {
       current.map((file, index) => ({
         ...file,
         extractionStatus: preparedFiles[index].extractionStatus,
+        ocrPages: preparedFiles[index].ocrPages,
         processingError: preparedFiles[index].processingError,
       })),
     );
@@ -214,7 +220,9 @@ export default function NewCasePage() {
                       {doc.sizeLabel} · {doc.extractionStatus === "reading"
                         ? "lendo PDF..."
                         : doc.extractionStatus === "text_extracted"
-                          ? "texto extraído"
+                          ? doc.ocrPages
+                            ? `texto extraído · OCR em ${doc.ocrPages} página(s)`
+                            : "texto extraído"
                           : doc.extractionStatus === "no_text"
                             ? "sem texto extraível; pode ser PDF digitalizado"
                             : doc.extractionStatus === "unreadable"
