@@ -12,8 +12,8 @@ import {
   BookOpen,
   LockKeyhole,
 } from "lucide-react";
+import Image from "next/image";
 import { useLanguage } from "@/components/LanguageProvider";
-import RisaLogo from "@/components/RisaLogo";
 
 const NAV = [
   {
@@ -62,7 +62,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-paper">
       <aside className="w-14 md:w-60 shrink-0 bg-navy-dark text-white/90 flex flex-col">
         <div className="px-2 py-4 md:px-5 md:py-6">
-          <RisaLogo compact className="mx-auto md:mx-0" />
+          <div className="mx-auto md:mx-0 inline-flex rounded-xl bg-white p-1.5">
+            <Image
+              src="/risa-portal-mark.png"
+              alt="RISA Verify"
+              width={750}
+              height={660}
+              priority
+              className="h-9 w-auto md:h-12 object-contain"
+            />
+          </div>
         </div>
 
         <nav className="flex-1 px-1.5 md:px-3 space-y-0.5">
