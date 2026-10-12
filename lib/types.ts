@@ -12,6 +12,7 @@ export interface ClinicalCase {
   createdAt: string;
   status: CaseStatus;
   documents: ClinicalDocument[];
+  labResults?: LabResult[];
   findings: Finding[];
   conflicts: Conflict[];
   gaps: Gap[];
@@ -44,6 +45,16 @@ export interface EvidenceRef {
   docName: string;
   page: number;
   excerpt: string;
+}
+
+export interface LabResult {
+  id: string;
+  testName: string;
+  result: string;
+  unit?: string;
+  referenceRange?: string;
+  status: "fora_da_referencia" | "sinalizado_no_laudo" | "dentro_da_referencia" | "sem_referencia";
+  evidence: EvidenceRef;
 }
 
 export interface Finding {
