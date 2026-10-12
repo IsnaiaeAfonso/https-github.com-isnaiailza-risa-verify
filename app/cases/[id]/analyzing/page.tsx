@@ -9,12 +9,11 @@ import { Card } from "@/components/ui";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 const STAGES = [
-  "Documentos preparados",
-  "Informações extraídas",
-  "Evidências identificadas",
-  "Comparando as informações",
-  "Identificando possíveis divergências",
-  "Preparando revisão",
+  "Verificando os PDFs anexados",
+  "Extraindo texto selecionável",
+  "Identificando evidências conhecidas",
+  "Comparando informações entre documentos",
+  "Preparando revisão humana",
 ];
 
 export default function AnalyzingPage() {
@@ -29,18 +28,18 @@ export default function AnalyzingPage() {
     if (clinicalCase.status !== "em_analise" && clinicalCase.status !== "revisao_pendente") {
       runAnalysis(clinicalCase.id);
     }
+    if (clinicalCase.status === "revisao_pendente") {
+      router.replace(`/cases/${clinicalCase.id}/review`);
+      return;
+    }
+
     const stageTimer = setInterval(() => {
-      setStageIndex((i) => Math.min(i + 1, STAGES.length - 1));
-    }, 550);
-    const redirect = setTimeout(() => {
-      router.push(`/cases/${clinicalCase.id}/review`);
-    }, 3400);
+      setStageIndex((index) => Math.min(index + 1, STAGES.length - 1));
+    }, 650);
     return () => {
       clearInterval(stageTimer);
-      clearTimeout(redirect);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clinicalCase?.id]);
+  }, [clinicalCase?.id, clinicalCase?.status, router, runAnalysis]);
 
   if (!clinicalCase) {
     return (
@@ -53,7 +52,7 @@ export default function AnalyzingPage() {
   return (
     <AppShell>
       <main className="flex-1 bg-paper flex flex-col">
-        <CaseHeader clinicalCase={clinicalCase} subtitle="Demonstração da análise de documentos" />
+        <CaseHeader clinicalCase={clinicalCase} subtitle="Extração de texto e identificação preliminar de evidências" />
         <div className="flex-1 flex items-center justify-center px-6 py-16">
           <Card className="w-full max-w-md px-6 py-6">
             <h2 className="text-base font-semibold text-ink mb-1">Analisando o caso...</h2>
