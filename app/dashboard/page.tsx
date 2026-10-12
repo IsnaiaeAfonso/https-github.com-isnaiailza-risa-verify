@@ -8,6 +8,8 @@ import PopulationStats from "@/components/PopulationStats";
 import { StatusPill, MetricCard, LevelPill } from "@/components/ui";
 import { FolderOpen, ListChecks, ShieldCheck, AlertTriangle, Plus, FileText, ChevronRight } from "lucide-react";
 import { DEMO_CASE_ID } from "@/lib/mockData";
+import { createReviewSnapshot } from "@/lib/reviewSnapshot";
+import type { ReviewSnapshot } from "@/lib/types";
 
 function formatDate(raw?: string) {
   if (!raw) return "Sem data";
@@ -27,6 +29,7 @@ const STATUS_TARGET: Record<string, string> = {
 export default function DashboardPage() {
   const { cases, loadDemoCase } = useCaseStore();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [demoSnapshot, setDemoSnapshot] = useState<ReviewSnapshot | null>(null);
 
   useEffect(() => {
     if (!cases.length) return;
@@ -40,6 +43,25 @@ export default function DashboardPage() {
     () => cases.find((item) => item.id === selectedCaseId) ?? cases[0],
     [cases, selectedCaseId]
   );
+
+  useEffect(() => {
+    if (!selectedCase || selectedCase.attestation) {
+      setDemoSnapshot(null);
+      return;
+    }
+
+    setDemoSnapshot(null);
+    let active = true;
+    createReviewSnapshot(selectedCase, selectedCase.reviewDecisions ?? []).then((snapshot) => {
+      if (active) setDemoSnapshot(snapshot);
+    }).catch(() => {
+      if (active) setDemoSnapshot(null);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedCase]);
 
   const totalDocs = cases.reduce((sum, item) => sum + item.documents.length, 0);
   const totalFindings = cases.reduce((sum, item) => sum + item.findings.length, 0);
@@ -319,28 +341,40 @@ export default function DashboardPage() {
                   <div className="rounded-2xl border border-line bg-paper p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-lg font-semibold text-ink">Integridade e rastreabilidade</div>
-                      <span className="inline-flex items-center rounded-full border border-success/20 bg-success-light px-2.5 py-1 text-[11px] font-medium text-success-dark">Atestação local</span>
+                      <span className="inline-flex items-center rounded-full border border-success/20 bg-success-light px-2.5 py-1 text-[11px] font-medium text-success-dark">
+                        {selectedCase.attestation ? "Atestação local" : "Prévia local · demo"}
+                      </span>
                     </div>
 
                     <div className="space-y-3 text-sm text-muted">
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
                         <span>Hash local (demo)</span>
-                        <span className="font-mono text-ink">{selectedCase.attestation?.contentHash?.slice(0, 10) ?? "Ainda não calculado"}</span>
+                        <span className="font-mono text-ink">{(selectedCase.attestation?.contentHash ?? demoSnapshot?.contentHash)?.slice(0, 16) ?? "Calculando…"}</span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
                         <span>Registrado em</span>
-                        <span className="text-ink">{selectedCase.attestation?.completedAt ? formatDate(selectedCase.attestation.completedAt) : "Ainda não concluído"}</span>
+                        <span className="text-right text-ink">
+                          {selectedCase.attestation?.completedAt
+                            ? formatDate(selectedCase.attestation.completedAt)
+                            : demoSnapshot?.createdAt
+                              ? new Date(demoSnapshot.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+                              : "Calculando…"}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg bg-panel px-3 py-2">
                         <span>Integridade</span>
-                        <span className="text-ink">Hash local</span>
+                        <span className="text-right text-ink">{selectedCase.attestation ? "Registrada localmente" : "Hash calculado localmente"}</span>
                       </div>
                       <div className="rounded-lg border border-line bg-panel px-3 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-medium text-ink">Próxima etapa: publicar a atestação SAS</span>
-                          <span className="text-xs font-medium text-muted">Não enviada</span>
+                          <span className="font-medium text-ink">Próxima etapa: revisão e assinatura SAS</span>
+                          <span className="text-xs font-medium text-muted">{selectedCase.attestation ? "Não publicada" : "Prévia pronta · demo"}</span>
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-muted">Este hash permanece local neste deploy. A emissão em rede exige configuração de signer e transação explícita.</p>
+                        <p className="mt-1 text-xs leading-5 text-muted">
+                          {selectedCase.attestation
+                            ? "Atestação registrada localmente. Nenhuma assinatura ou transação Solana foi enviada."
+                            : "Hash de prévia calculado a partir deste caso para demonstração. A atestação só será registrada após revisão; publicação SAS exige signer e transação explícita."}
+                        </p>
                       </div>
                     </div>
                   </div>
